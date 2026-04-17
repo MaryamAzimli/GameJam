@@ -39,4 +39,16 @@ void Update()
         Vector3 move = new Vector3(direction.x, direction.y, 0f);
         transform.position += move * moveDistance;
     }
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.CompareTag("Goal"))
+        {
+            FindObjectOfType<GameManager>().Win();
+        }
+
+        if (other.CompareTag("Trap"))
+        {
+            FindObjectOfType<GameManager>().Lose();
+        }
+    }
 }
