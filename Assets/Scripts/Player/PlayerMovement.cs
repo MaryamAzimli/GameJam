@@ -4,16 +4,14 @@ using System.Collections;
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Movement")]
-    public float moveSpeed = 7f;
-    public float maxDragDistance = 5f;
-    public float touchRadius = 1.5f;
-public float legOffsetY = 0.5f;
-public float sideOffsetX = 0.3f;
+    public float moveSpeed = 10f;
+    public float maxDragDistance = 10f;
+    public float touchRadius = 1.5f;    // extra radius around player
+
     private bool isDragging = false;
     private bool isMoving = false;
-
 private Animator anim;
-    private Vector2 dragStartScreen;
+    private Vector3 dragStartWorld;
     private Collider2D col;
 
     void Awake()
@@ -28,20 +26,22 @@ private Animator anim;
             HandleInput();
     }
 
-    // ---------------- TOUCH DETECTION ----------------
     bool IsTouchingPlayer(Vector3 worldPos)
     {
-        if (col != null && col.OverlapPoint(worldPos))
+        // Check 1 - directly on the collider
+        if (col.OverlapPoint(worldPos))
             return true;
 
+        // Check 2 - within radius around player
         float dist = Vector3.Distance(worldPos, transform.position);
-        return dist <= touchRadius;
+        if (dist <= touchRadius)
+            return true;
+
+        return false;
     }
 
-    // ---------------- INPUT ----------------
     void HandleInput()
     {
-        // START DRAG
         if (Input.GetMouseButtonDown(0))
         {
             Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -50,44 +50,28 @@ private Animator anim;
             if (IsTouchingPlayer(worldPos))
             {
                 isDragging = true;
-                dragStartScreen = Input.mousePosition;
+                dragStartWorld = worldPos;
             }
         }
 
-        // END DRAG
         if (Input.GetMouseButtonUp(0) && isDragging)
         {
             isDragging = false;
 
-            Vector2 dragEndScreen = Input.mousePosition;
-            Vector2 dragVector = dragEndScreen - dragStartScreen;
+            Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            worldPos.z = 0f;
 
-            float screenDistance = dragVector.magnitude;
+            Vector3 dir = worldPos - dragStartWorld;
+            float dist = Mathf.Min(dir.magnitude, maxDragDistance);
 
-            if (screenDistance > 0.1f)
+            if (dist > 0.05f)
             {
-                Vector2 direction = dragVector.normalized;
-
-                // Screen → world movement scaling
-                float worldDistance = Mathf.Min(screenDistance * 0.01f, maxDragDistance);
-
-                Vector3 target = transform.position +
-                                 new Vector3(direction.x, direction.y, 0f) * worldDistance;
-
-                // ---------------- BOUNDS ----------------
-float minX = MapBounds.instance.MinX + sideOffsetX;
-float maxX = MapBounds.instance.MaxX - sideOffsetX;
-float minY = MapBounds.instance.MinY + legOffsetY;
-float maxY = MapBounds.instance.MaxY;
-
-target.x = Mathf.Clamp(target.x, minX, maxX);
-target.y = Mathf.Clamp(target.y, minY, maxY);
+                Vector3 target = transform.position + dir.normalized * dist;
                 StartCoroutine(MoveToTarget(target));
             }
         }
     }
 
-    // ---------------- MOVEMENT ----------------
     IEnumerator MoveToTarget(Vector3 target)
     {
         anim.SetBool("isMoving", true);
@@ -96,11 +80,7 @@ target.y = Mathf.Clamp(target.y, minY, maxY);
         while (Vector3.Distance(transform.position, target) > 0.01f)
         {
             transform.position = Vector3.MoveTowards(
-                transform.position,
-                target,
-                moveSpeed * Time.deltaTime
-            );
-
+                transform.position, target, moveSpeed * Time.deltaTime);
             yield return null;
         }
 
@@ -109,13 +89,26 @@ target.y = Mathf.Clamp(target.y, minY, maxY);
         anim.SetBool("isMoving", false);
     }
 
-    // ---------------- GAME LOGIC ----------------
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Goal"))
-            FindObjectOfType<GameManager>().Win();
+        if (GameManager.instance != null && GameManager.instance.isGameOver)
+            return;
 
-        if (other.CompareTag("Trap"))
-            FindObjectOfType<GameManager>().Lose();
+        Debug.Log("Triggered with: " + other.name + " tag: " + other.tag);
+
+        Collider2D myCollider = GetComponent<Collider2D>();
+        if (myCollider != null)
+        {
+            myCollider.enabled = false;
+        }
+
+        if (other.CompareTag("Goal"))
+        {
+            GameManager.instance.Win();
+        }
+        else if (other.CompareTag("Trap"))
+        {
+            GameManager.instance.Lose();
+        }
     }
 }

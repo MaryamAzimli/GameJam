@@ -7,6 +7,7 @@ public class GameManager : MonoBehaviour
 
     public int level = 1;
     public int life = 1;
+    public bool isGameOver = false;
 
     public LosePanelUI losePanelUI;
     public WinPanelUI winPanelUI;
@@ -20,6 +21,7 @@ public class GameManager : MonoBehaviour
         }
 
         instance = this;
+        isGameOver = false;
         Debug.Log("Life = " + life);
     }
 
@@ -45,6 +47,9 @@ public class GameManager : MonoBehaviour
 
     public void Win()
     {
+        if (isGameOver) return;
+        isGameOver = true;
+
         Debug.Log("YOU WIN!");
 
         if (winPanelUI != null)
@@ -52,14 +57,13 @@ public class GameManager : MonoBehaviour
             Debug.Log("Calling winPanelUI.Show()");
             winPanelUI.Show();
         }
-        else
-        {
-            Debug.Log("winPanelUI is NULL");
-        }
     }
 
     public void Lose()
     {
+        if (isGameOver) return;
+        isGameOver = true;
+
         Debug.Log("YOU LOSE!");
         life++;
 
@@ -67,10 +71,6 @@ public class GameManager : MonoBehaviour
         {
             Debug.Log("Calling losePanelUI.Show()");
             losePanelUI.Show();
-        }
-        else
-        {
-            Debug.Log("losePanelUI is NULL");
         }
     }
 
@@ -83,23 +83,17 @@ public class GameManager : MonoBehaviour
     public void NextLevel()
     {
         level++;
-        Time.timeScale = 1f;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
-    void NextLevel()
-{
-    level++;
 
-    int nextIndex = SceneManager.GetActiveScene().buildIndex + 1;
+        int nextIndex = SceneManager.GetActiveScene().buildIndex + 1;
 
-    if (nextIndex < SceneManager.sceneCountInBuildSettings)
-    {
-        SceneManager.LoadScene(nextIndex);
-    }
-    else
-    {
-        Debug.Log("No more levels!");
-        // Later we can load a win screen here
-    }
-}
+        if (nextIndex < SceneManager.sceneCountInBuildSettings)
+        {
+            Time.timeScale = 1f;
+            SceneManager.LoadScene(nextIndex);
+        }
+        else
+        {
+            Debug.Log("No more levels!");
+        }
     }
 }
