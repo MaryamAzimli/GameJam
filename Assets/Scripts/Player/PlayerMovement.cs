@@ -10,7 +10,8 @@ public class PlayerMovement : MonoBehaviour
 
     private bool isDragging = false;
     private bool isMoving = false;
-    private Vector3 dragStartWorld;
+
+    private Vector2 dragStartScreen;
 
     void Update()
     {
@@ -20,32 +21,45 @@ public class PlayerMovement : MonoBehaviour
 
     void HandleInput()
     {
+        // START DRAG
         if (Input.GetMouseButtonDown(0))
         {
             Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             worldPos.z = 0f;
 
             float dist = Vector3.Distance(worldPos, transform.position);
+
             if (dist <= dragStartRadius)
             {
                 isDragging = true;
-                dragStartWorld = worldPos;
+                dragStartScreen = Input.mousePosition;
             }
         }
 
+        // END DRAG
         if (Input.GetMouseButtonUp(0) && isDragging)
         {
             isDragging = false;
 
-            Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            worldPos.z = 0f;
+            Vector2 dragEndScreen = Input.mousePosition;
+            Vector2 dragVector = dragEndScreen - dragStartScreen;
 
-            Vector3 dir = worldPos - dragStartWorld;
-            float dist = Mathf.Min(dir.magnitude, maxDragDistance);
+            float screenDistance = dragVector.magnitude;
 
-            if (dist > 0.1f)
+            if (screenDistance > 0.1f)
             {
-                Vector3 target = transform.position + dir.normalized * dist;
+                Vector2 direction = dragVector.normalized;
+
+                // Convert screen drag to world movement
+                float worldDistance = Mathf.Min(screenDistance * 0.01f, maxDragDistance);
+
+                Vector3 target = transform.position +
+                                 new Vector3(direction.x, direction.y, 0f) * worldDistance;
+
+                // ✅ Correct bounds usage (PascalCase)
+                target.x = Mathf.Clamp(target.x, MapBounds.instance.MinX, MapBounds.instance.MaxX);
+                target.y = Mathf.Clamp(target.y, MapBounds.instance.MinY, MapBounds.instance.MaxY);
+
                 StartCoroutine(MoveToTarget(target));
             }
         }
@@ -58,7 +72,11 @@ public class PlayerMovement : MonoBehaviour
         while (Vector3.Distance(transform.position, target) > 0.01f)
         {
             transform.position = Vector3.MoveTowards(
-                transform.position, target, moveSpeed * Time.deltaTime);
+                transform.position,
+                target,
+                moveSpeed * Time.deltaTime
+            );
+
             yield return null;
         }
 
@@ -70,6 +88,7 @@ public class PlayerMovement : MonoBehaviour
     {
         if (other.CompareTag("Goal"))
             FindObjectOfType<GameManager>().Win();
+
         if (other.CompareTag("Trap"))
             FindObjectOfType<GameManager>().Lose();
     }
