@@ -666,18 +666,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &406487742
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 406487741}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 28e39d501e3a943b98704b197840dd24, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!61 &406487743
 BoxCollider2D:
   m_ObjectHideFlags: 0
