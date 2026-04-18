@@ -40,9 +40,19 @@ void Awake()
     }
 
     void NextLevel()
-    {
-        level++;
+{
+    level++;
 
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+    int nextIndex = SceneManager.GetActiveScene().buildIndex + 1;
+
+    if (nextIndex < SceneManager.sceneCountInBuildSettings)
+    {
+        SceneManager.LoadScene(nextIndex);
     }
+    else
+    {
+        Debug.Log("No more levels!");
+        // Later we can load a win screen here
+    }
+}
 }
