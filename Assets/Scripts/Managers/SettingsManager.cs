@@ -1,12 +1,21 @@
 using UnityEngine;
+using System;
 
 public class SettingsManager : MonoBehaviour
 {
     public static SettingsManager Instance;
 
-    public bool musicOn = true;
-    public bool soundOn = true;
-    public bool vibrationOn = true;
+    private const string MUSIC_KEY = "music_on";
+    private const string VIBRATION_KEY = "vibration_on";
+    private const string LANGUAGE_KEY = "language";
+
+    public bool IsMusicOn { get; private set; }
+    public bool IsVibrationOn { get; private set; }
+    public string CurrentLanguage { get; private set; }
+
+    public Action<bool> OnMusicChanged;
+    public Action<bool> OnVibrationChanged;
+    public Action<string> OnLanguageChanged;
 
     private void Awake()
     {
@@ -22,39 +31,47 @@ public class SettingsManager : MonoBehaviour
         }
     }
 
-    public void ToggleMusic()
+    private void LoadSettings()
     {
-        musicOn = !musicOn;
-        SaveSettings();
-        Debug.Log("Music: " + musicOn);
+        IsMusicOn = PlayerPrefs.GetInt(MUSIC_KEY, 1) == 1;
+        IsVibrationOn = PlayerPrefs.GetInt(VIBRATION_KEY, 1) == 1;
+        CurrentLanguage = PlayerPrefs.GetString(LANGUAGE_KEY, "tr");
     }
 
-    public void ToggleSound()
+    public void SetMusic(bool value)
     {
-        soundOn = !soundOn;
-        SaveSettings();
-        Debug.Log("Sound: " + soundOn);
+        IsMusicOn = value;
+        PlayerPrefs.SetInt(MUSIC_KEY, value ? 1 : 0);
+        PlayerPrefs.Save();
+
+        OnMusicChanged?.Invoke(IsMusicOn);
+    }
+
+    public void ToggleMusic()
+    {
+        SetMusic(!IsMusicOn);
+    }
+
+    public void SetVibration(bool value)
+    {
+        IsVibrationOn = value;
+        PlayerPrefs.SetInt(VIBRATION_KEY, value ? 1 : 0);
+        PlayerPrefs.Save();
+
+        OnVibrationChanged?.Invoke(IsVibrationOn);
     }
 
     public void ToggleVibration()
     {
-        vibrationOn = !vibrationOn;
-        SaveSettings();
-        Debug.Log("Vibration: " + vibrationOn);
+        SetVibration(!IsVibrationOn);
     }
 
-    public void SaveSettings()
+    public void SetLanguage(string languageCode)
     {
-        PlayerPrefs.SetInt("MusicOn", musicOn ? 1 : 0);
-        PlayerPrefs.SetInt("SoundOn", soundOn ? 1 : 0);
-        PlayerPrefs.SetInt("VibrationOn", vibrationOn ? 1 : 0);
+        CurrentLanguage = languageCode;
+        PlayerPrefs.SetString(LANGUAGE_KEY, languageCode);
         PlayerPrefs.Save();
-    }
 
-    public void LoadSettings()
-    {
-        musicOn = PlayerPrefs.GetInt("MusicOn", 1) == 1;
-        soundOn = PlayerPrefs.GetInt("SoundOn", 1) == 1;
-        vibrationOn = PlayerPrefs.GetInt("VibrationOn", 1) == 1;
+        OnLanguageChanged?.Invoke(CurrentLanguage);
     }
 }

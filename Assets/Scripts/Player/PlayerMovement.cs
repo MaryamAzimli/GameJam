@@ -4,14 +4,20 @@ using System.Collections;
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Movement")]
-    public float moveSpeed = 5f;
+    public float moveSpeed = 7f;
     public float maxDragDistance = 5f;
-    public float dragStartRadius = 0.8f;
+    public float touchRadius = 1.5f;
 
     private bool isDragging = false;
     private bool isMoving = false;
 
     private Vector2 dragStartScreen;
+    private Collider2D col;
+
+    void Awake()
+    {
+        col = GetComponent<Collider2D>();
+    }
 
     void Update()
     {
@@ -19,6 +25,17 @@ public class PlayerMovement : MonoBehaviour
             HandleInput();
     }
 
+    // ---------------- TOUCH DETECTION ----------------
+    bool IsTouchingPlayer(Vector3 worldPos)
+    {
+        if (col != null && col.OverlapPoint(worldPos))
+            return true;
+
+        float dist = Vector3.Distance(worldPos, transform.position);
+        return dist <= touchRadius;
+    }
+
+    // ---------------- INPUT ----------------
     void HandleInput()
     {
         // START DRAG
@@ -27,9 +44,7 @@ public class PlayerMovement : MonoBehaviour
             Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             worldPos.z = 0f;
 
-            float dist = Vector3.Distance(worldPos, transform.position);
-
-            if (dist <= dragStartRadius)
+            if (IsTouchingPlayer(worldPos))
             {
                 isDragging = true;
                 dragStartScreen = Input.mousePosition;
@@ -50,13 +65,13 @@ public class PlayerMovement : MonoBehaviour
             {
                 Vector2 direction = dragVector.normalized;
 
-                // Convert screen drag to world movement
+                // Screen → world movement scaling
                 float worldDistance = Mathf.Min(screenDistance * 0.01f, maxDragDistance);
 
                 Vector3 target = transform.position +
                                  new Vector3(direction.x, direction.y, 0f) * worldDistance;
 
-                // ✅ Correct bounds usage (PascalCase)
+                // ---------------- BOUNDS ----------------
                 target.x = Mathf.Clamp(target.x, MapBounds.instance.MinX, MapBounds.instance.MaxX);
                 target.y = Mathf.Clamp(target.y, MapBounds.instance.MinY, MapBounds.instance.MaxY);
 
@@ -65,6 +80,7 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    // ---------------- MOVEMENT ----------------
     IEnumerator MoveToTarget(Vector3 target)
     {
         isMoving = true;
@@ -84,6 +100,7 @@ public class PlayerMovement : MonoBehaviour
         isMoving = false;
     }
 
+    // ---------------- GAME LOGIC ----------------
     void OnTriggerEnter2D(Collider2D other)
     {
         if (other.CompareTag("Goal"))
