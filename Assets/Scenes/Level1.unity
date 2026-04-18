@@ -135,6 +135,7 @@ GameObject:
   - component: {fileID: 724457124}
   - component: {fileID: 724457127}
   - component: {fileID: 724457128}
+  - component: {fileID: 724457129}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -154,7 +155,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c223dae51b95b9845ab50a3c2cf1b757, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveDistance: 2
+  moveSpeed: 5
+  maxDragDistance: 5
+  vectorArrow: {fileID: 724457129}
 --- !u!212 &724457125
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -294,6 +297,23 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 1.4885497, y: 3.2442737}
   m_EdgeRadius: 0
+--- !u!114 &724457129
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 724457123}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28e39d501e3a943b98704b197840dd24, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxDragDistance: 5
+  arrowColor: {r: 1, g: 1, b: 1, a: 1}
+  dangerColor: {r: 1, g: 0, b: 0, a: 1}
+  arrowHeadSize: 0.3
+  lineWidth: 0.06
 --- !u!1 &949879631
 GameObject:
   m_ObjectHideFlags: 0
@@ -571,12 +591,14 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1044119999}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c223dae51b95b9845ab50a3c2cf1b757, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveDistance: 1
+  moveSpeed: 5
+  maxDragDistance: 5
+  vectorArrow: {fileID: 0}
 --- !u!114 &1044120005
 MonoBehaviour:
   m_ObjectHideFlags: 0
