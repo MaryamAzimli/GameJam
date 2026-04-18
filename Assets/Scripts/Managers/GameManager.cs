@@ -85,5 +85,20 @@ public class GameManager : MonoBehaviour
         level++;
         Time.timeScale = 1f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+    void NextLevel()
+{
+    level++;
+
+    int nextIndex = SceneManager.GetActiveScene().buildIndex + 1;
+
+    if (nextIndex < SceneManager.sceneCountInBuildSettings)
+    {
+        SceneManager.LoadScene(nextIndex);
     }
+    else
+    {
+        Debug.Log("No more levels!");
+        // Later we can load a win screen here
+    }
+}
 }

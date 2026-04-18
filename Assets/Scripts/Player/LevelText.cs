@@ -19,7 +19,7 @@ public class LevelText : MonoBehaviour
 
         if (level == 1 && life == 1)
         {
-            textUI.text = "Drag the screen to move.";
+            textUI.text = "";
         }
         else if (level == 1 && life == 2)
         {
