@@ -1,16 +1,17 @@
 using UnityEngine;
 using System.Collections;
-using System.Collections.Generic;
 
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Movement")]
     public float moveSpeed = 5f;
-    public float minPathDistance = 0.1f; // min dist between path points
+    public float maxDragDistance = 5f;
 
     [Header("References")]
-    public PathDrawer pathDrawer;
+    public VectorArrow vectorArrow;
 
+    private Vector3 dragStart;
+    private bool isDragging = false;
     private bool isMoving = false;
 
     void Update()
@@ -23,45 +24,42 @@ public class PlayerMovement : MonoBehaviour
     {
         if (Input.GetMouseButtonDown(0))
         {
-            pathDrawer.StartPath(transform.position);
+            dragStart = transform.position;
+            isDragging = true;
         }
 
-        if (Input.GetMouseButton(0) && pathDrawer.IsDrawing)
+        if (Input.GetMouseButton(0) && isDragging)
         {
             Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             worldPos.z = 0f;
-            pathDrawer.AddPoint(worldPos);
+            vectorArrow.ShowArrow(dragStart, worldPos);
         }
 
-        if (Input.GetMouseButtonUp(0) && pathDrawer.IsDrawing)
+        if (Input.GetMouseButtonUp(0) && isDragging)
         {
-            List<Vector3> path = pathDrawer.EndPath();
-            if (path.Count > 1)
-                StartCoroutine(FollowPath(path));
+            isDragging = false;
+            vectorArrow.HideArrow();
+
+            Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            worldPos.z = 0f;
+            Vector3 target = vectorArrow.GetClampedTarget(dragStart, worldPos);
+
+            StartCoroutine(MoveToTarget(target));
         }
     }
 
-    IEnumerator FollowPath(List<Vector3> path)
+    IEnumerator MoveToTarget(Vector3 target)
     {
         isMoving = true;
 
-        for (int i = 1; i < path.Count; i++)
+        while (Vector3.Distance(transform.position, target) > 0.01f)
         {
-            Vector3 target = path[i];
-
-            while (Vector3.Distance(transform.position, target) > 0.01f)
-            {
-                transform.position = Vector3.MoveTowards(
-                    transform.position,
-                    target,
-                    moveSpeed * Time.deltaTime
-                );
-                yield return null;
-            }
-
-            transform.position = target;
+            transform.position = Vector3.MoveTowards(
+                transform.position, target, moveSpeed * Time.deltaTime);
+            yield return null;
         }
 
+        transform.position = target;
         isMoving = false;
     }
 
@@ -69,7 +67,6 @@ public class PlayerMovement : MonoBehaviour
     {
         if (other.CompareTag("Goal"))
             FindObjectOfType<GameManager>().Win();
-
         if (other.CompareTag("Trap"))
             FindObjectOfType<GameManager>().Lose();
     }
