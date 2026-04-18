@@ -30,7 +30,7 @@ public class UIManager : MonoBehaviour
     public void GoToMainMenu()
     {
         Time.timeScale = 1f;
-        Debug.Log("Main Menu button clicked");
+        SceneManager.LoadScene(0);
     }
 
     public void OpenSettings()

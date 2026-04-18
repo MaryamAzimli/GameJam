@@ -6,13 +6,11 @@ public class PlayerMovement : MonoBehaviour
     [Header("Movement")]
     public float moveSpeed = 5f;
     public float maxDragDistance = 5f;
+    public float dragStartRadius = 0.8f;
 
-    [Header("References")]
-    public VectorArrow vectorArrow;
-
-    private Vector3 dragStart;
     private bool isDragging = false;
     private bool isMoving = false;
+    private Vector3 dragStartWorld;
 
     void Update()
     {
@@ -24,27 +22,32 @@ public class PlayerMovement : MonoBehaviour
     {
         if (Input.GetMouseButtonDown(0))
         {
-            dragStart = transform.position;
-            isDragging = true;
-        }
-
-        if (Input.GetMouseButton(0) && isDragging)
-        {
             Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             worldPos.z = 0f;
-            vectorArrow.ShowArrow(dragStart, worldPos);
+
+            float dist = Vector3.Distance(worldPos, transform.position);
+            if (dist <= dragStartRadius)
+            {
+                isDragging = true;
+                dragStartWorld = worldPos;
+            }
         }
 
         if (Input.GetMouseButtonUp(0) && isDragging)
         {
             isDragging = false;
-            vectorArrow.HideArrow();
 
             Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             worldPos.z = 0f;
-            Vector3 target = vectorArrow.GetClampedTarget(dragStart, worldPos);
 
-            StartCoroutine(MoveToTarget(target));
+            Vector3 dir = worldPos - dragStartWorld;
+            float dist = Mathf.Min(dir.magnitude, maxDragDistance);
+
+            if (dist > 0.1f)
+            {
+                Vector3 target = transform.position + dir.normalized * dist;
+                StartCoroutine(MoveToTarget(target));
+            }
         }
     }
 
