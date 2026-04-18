@@ -4980,8 +4980,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   level: 1
   life: 1
-  losePanelUI: {fileID: 0}
-  winPanelUI: {fileID: 0}
+  losePanelUI: {fileID: 2562212}
+  winPanelUI: {fileID: 610288174}
 --- !u!114 &1553904966
 MonoBehaviour:
   m_ObjectHideFlags: 0
