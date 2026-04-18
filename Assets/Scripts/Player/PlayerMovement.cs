@@ -12,11 +12,13 @@ public float sideOffsetX = 0.3f;
     private bool isDragging = false;
     private bool isMoving = false;
 
+private Animator anim;
     private Vector2 dragStartScreen;
     private Collider2D col;
 
     void Awake()
     {
+        anim = GetComponent<Animator>();
         col = GetComponent<Collider2D>();
     }
 
@@ -88,6 +90,7 @@ target.y = Mathf.Clamp(target.y, minY, maxY);
     // ---------------- MOVEMENT ----------------
     IEnumerator MoveToTarget(Vector3 target)
     {
+        anim.SetBool("isMoving", true);
         isMoving = true;
 
         while (Vector3.Distance(transform.position, target) > 0.01f)
@@ -103,6 +106,7 @@ target.y = Mathf.Clamp(target.y, minY, maxY);
 
         transform.position = target;
         isMoving = false;
+        anim.SetBool("isMoving", false);
     }
 
     // ---------------- GAME LOGIC ----------------
