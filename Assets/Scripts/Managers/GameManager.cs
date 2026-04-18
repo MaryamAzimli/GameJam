@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+public GameObject losePanel;
+
 public class GameManager : MonoBehaviour
 {
     public void Win()
@@ -12,6 +14,7 @@ public class GameManager : MonoBehaviour
     public void Lose()
     {
         Debug.Log("YOU LOSE!");
+        losePanel.SetActive(true);
         Invoke("Restart", 1f);
     }
 
