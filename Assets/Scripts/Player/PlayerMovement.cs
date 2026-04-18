@@ -1,54 +1,73 @@
 using UnityEngine;
+using System.Collections;
 
 public class PlayerMovement : MonoBehaviour
 {
-    Vector2 startTouch;
-    Vector2 endTouch;
+    [Header("Movement")]
+    public float moveSpeed = 5f;
+    public float maxDragDistance = 5f;
 
-    public float moveDistance = 0.5f;
+    [Header("References")]
+    public VectorArrow vectorArrow;
 
-void Update()
-{
-    Debug.Log("Running");
-    HandleInput();
-}
+    private Vector3 dragStart;
+    private bool isDragging = false;
+    private bool isMoving = false;
+
+    void Update()
+    {
+        if (!isMoving)
+            HandleInput();
+    }
 
     void HandleInput()
     {
         if (Input.GetMouseButtonDown(0))
         {
-            startTouch = Input.mousePosition;
+            dragStart = transform.position;
+            isDragging = true;
         }
 
-        if (Input.GetMouseButtonUp(0))
+        if (Input.GetMouseButton(0) && isDragging)
         {
-            endTouch = Input.mousePosition;
+            Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            worldPos.z = 0f;
+            vectorArrow.ShowArrow(dragStart, worldPos);
+        }
 
-            Vector2 swipe = endTouch - startTouch;
+        if (Input.GetMouseButtonUp(0) && isDragging)
+        {
+            isDragging = false;
+            vectorArrow.HideArrow();
 
-            if (swipe.magnitude < 50f) return; // ignore tiny swipes
+            Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            worldPos.z = 0f;
+            Vector3 target = vectorArrow.GetClampedTarget(dragStart, worldPos);
 
-            swipe.Normalize();
-
-            MovePlayer(swipe);
+            StartCoroutine(MoveToTarget(target));
         }
     }
 
-    void MovePlayer(Vector2 direction)
+    IEnumerator MoveToTarget(Vector3 target)
     {
-        Vector3 move = new Vector3(direction.x, direction.y, 0f);
-        transform.position += move * moveDistance;
+        isMoving = true;
+
+        while (Vector3.Distance(transform.position, target) > 0.01f)
+        {
+            transform.position = Vector3.MoveTowards(
+                transform.position, target, moveSpeed * Time.deltaTime);
+            yield return null;
+        }
+
+        transform.position = target;
+        isMoving = false;
     }
+
     void OnTriggerEnter2D(Collider2D other)
     {
         if (other.CompareTag("Goal"))
-        {
             FindObjectOfType<GameManager>().Win();
-        }
-
         if (other.CompareTag("Trap"))
-        {
             FindObjectOfType<GameManager>().Lose();
-        }
     }
 }
