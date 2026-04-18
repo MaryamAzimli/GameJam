@@ -87,10 +87,24 @@ public class PlayerMovement : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Goal"))
-            GameManager.instance.Win();
+        if (GameManager.instance != null && GameManager.instance.isGameOver)
+            return;
 
-        if (other.CompareTag("Trap"))
+        Debug.Log("Triggered with: " + other.name + " tag: " + other.tag);
+
+        Collider2D myCollider = GetComponent<Collider2D>();
+        if (myCollider != null)
+        {
+            myCollider.enabled = false;
+        }
+
+        if (other.CompareTag("Goal"))
+        {
+            GameManager.instance.Win();
+        }
+        else if (other.CompareTag("Trap"))
+        {
             GameManager.instance.Lose();
+        }
     }
 }
