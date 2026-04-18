@@ -69,8 +69,9 @@ public class PlayerMovement : MonoBehaviour
     void OnTriggerEnter2D(Collider2D other)
     {
         if (other.CompareTag("Goal"))
-            FindObjectOfType<GameManager>().Win();
+            GameManager.instance.Win();
+
         if (other.CompareTag("Trap"))
-            FindObjectOfType<GameManager>().Lose();
+            GameManager.instance.Lose();
     }
 }

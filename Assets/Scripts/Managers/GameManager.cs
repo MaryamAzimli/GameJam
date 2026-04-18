@@ -8,41 +8,82 @@ public class GameManager : MonoBehaviour
     public int level = 1;
     public int life = 1;
 
-void Awake()
-{
-    if (instance != null)
+    public LosePanelUI losePanelUI;
+    public WinPanelUI winPanelUI;
+
+    void Awake()
     {
-        Destroy(gameObject);
-        return;
+        if (instance != null)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        instance = this;
+        Debug.Log("Life = " + life);
     }
 
-    instance = this;
-    Debug.Log("Life = " + life);
-    DontDestroyOnLoad(gameObject);
-}
+    void Start()
+    {
+        if (losePanelUI == null)
+        {
+            GameObject loseObj = GameObject.Find("LoseWindowPanel");
+            if (loseObj != null)
+                losePanelUI = loseObj.GetComponent<LosePanelUI>();
+        }
+
+        if (winPanelUI == null)
+        {
+            GameObject winObj = GameObject.Find("WinWindowPanel");
+            if (winObj != null)
+                winPanelUI = winObj.GetComponent<WinPanelUI>();
+        }
+
+        Debug.Log("losePanelUI after Start = " + losePanelUI);
+        Debug.Log("winPanelUI after Start = " + winPanelUI);
+    }
+
     public void Win()
     {
         Debug.Log("YOU WIN!");
-        Invoke("NextLevel", 1f);
+
+        if (winPanelUI != null)
+        {
+            Debug.Log("Calling winPanelUI.Show()");
+            winPanelUI.Show();
+        }
+        else
+        {
+            Debug.Log("winPanelUI is NULL");
+        }
     }
-   
+
     public void Lose()
     {
         Debug.Log("YOU LOSE!");
         life++;
-        Invoke("Restart", 1f);
+
+        if (losePanelUI != null)
+        {
+            Debug.Log("Calling losePanelUI.Show()");
+            losePanelUI.Show();
+        }
+        else
+        {
+            Debug.Log("losePanelUI is NULL");
+        }
     }
 
-    void Restart()
+    public void Restart()
     {
-
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
-    void NextLevel()
+    public void NextLevel()
     {
         level++;
-
+        Time.timeScale = 1f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
     }
 }
