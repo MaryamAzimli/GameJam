@@ -7,7 +7,8 @@ public class PlayerMovement : MonoBehaviour
     public float moveSpeed = 7f;
     public float maxDragDistance = 5f;
     public float touchRadius = 1.5f;
-
+public float legOffsetY = 0.5f;
+public float sideOffsetX = 0.3f;
     private bool isDragging = false;
     private bool isMoving = false;
 
@@ -72,9 +73,13 @@ public class PlayerMovement : MonoBehaviour
                                  new Vector3(direction.x, direction.y, 0f) * worldDistance;
 
                 // ---------------- BOUNDS ----------------
-                target.x = Mathf.Clamp(target.x, MapBounds.instance.MinX, MapBounds.instance.MaxX);
-                target.y = Mathf.Clamp(target.y, MapBounds.instance.MinY, MapBounds.instance.MaxY);
+float minX = MapBounds.instance.MinX + sideOffsetX;
+float maxX = MapBounds.instance.MaxX - sideOffsetX;
+float minY = MapBounds.instance.MinY + legOffsetY;
+float maxY = MapBounds.instance.MaxY;
 
+target.x = Mathf.Clamp(target.x, minX, maxX);
+target.y = Mathf.Clamp(target.y, minY, maxY);
                 StartCoroutine(MoveToTarget(target));
             }
         }
