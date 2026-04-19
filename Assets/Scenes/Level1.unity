@@ -1576,7 +1576,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 5
-  maxDragDistance: 5
   touchRadius: 1.5
   carriedFoodVisuals:
   - {fileID: 404551484}
@@ -1586,7 +1585,6 @@ MonoBehaviour:
   successSound: {fileID: 0}
   failSound: {fileID: 0}
   riddlePanel: {fileID: 0}
-  gridOrigin: {x: 0, y: 0}
 --- !u!212 &406487746
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -6705,6 +6703,7 @@ GameObject:
   - component: {fileID: 1553904969}
   - component: {fileID: 1553904967}
   - component: {fileID: 1553904966}
+  - component: {fileID: 1553904968}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -6783,7 +6782,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 5
-  gridOrigin: {x: 0, y: 0}
+  touchRadius: 1.5
+  carriedFoodVisuals: []
+  grabSound: {fileID: 0}
+  successSound: {fileID: 0}
+  failSound: {fileID: 0}
+  riddlePanel: {fileID: 0}
 --- !u!81 &1553904969
 AudioListener:
   m_ObjectHideFlags: 0
@@ -7968,6 +7972,23 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2090240608
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2090240605}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 39984ade45837094a9234c6de59144fe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  width: 20
+  height: 20
+  cellSize: 3
+  gridOrigin: {x: 0, y: 0}
+  gridCellPrefab: {fileID: 4422852360109067093, guid: b5b06bd649fb0694b85b6f16f445ae08, type: 3}
 --- !u!1 &2092763727
 GameObject:
   m_ObjectHideFlags: 0
