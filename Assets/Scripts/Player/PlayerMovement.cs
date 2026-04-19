@@ -163,85 +163,98 @@ public class PlayerMovement : MonoBehaviour
     }
 
     // --- �ARPI?MA VE OYUN MANTI?I ---
- void OnTriggerEnter2D(Collider2D other)
-{
-    if (GameManager.instance == null || GameManager.instance.isGameOver) return;
-
-    // --- PICKUP LOGIC ---
-    if (other.CompareTag("Food1") || other.CompareTag("Food2") || other.CompareTag("Food3"))
+    void OnTriggerEnter2D(Collider2D other)
     {
-        int foodID = int.Parse(other.tag.Substring(4));
+        if (GameManager.instance == null || GameManager.instance.isGameOver) return;
 
-        if (!GameManager.instance.hasFood && foodID == GameManager.instance.currentStep)
+        // --- PICKUP LOGIC ---
+        if (other.CompareTag("Food1") || other.CompareTag("Food2") || other.CompareTag("Food3"))
         {
-            GameManager.instance.activeFoodID = foodID;
-            GameManager.instance.hasFood = true;
-            other.gameObject.SetActive(false);
+            int foodID = int.Parse(other.tag.Substring(4));
 
-            // Feed ID 1 -> Shows Index 0, ID 2 -> Index 1
-            UpdateFoodVisual(foodID - 1, true); 
+            if (!GameManager.instance.hasFood && foodID == GameManager.instance.currentStep)
+            {
+                GameManager.instance.activeFoodID = foodID;
+                GameManager.instance.hasFood = true;
+                other.gameObject.SetActive(false);
+
+                // Feed ID 1 -> Shows Index 0, ID 2 -> Index 1
+                UpdateFoodVisual(foodID - 1, true);
+            }
+        }
+
+        // --- FEEDING LOGIC ---
+        else if (other.CompareTag("Animal1") || other.CompareTag("Animal2") || other.CompareTag("Animal3"))
+        {
+            int animalID = int.Parse(other.tag.Substring(6));
+
+            if (animalID == GameManager.instance.currentStep && GameManager.instance.hasFood && GameManager.instance.activeFoodID == animalID)
+            {
+                // 1. Hide the honey from player's head
+                UpdateFoodVisual(GameManager.instance.activeFoodID - 1, false);
+
+                // 2. Advance the step
+                GameManager.instance.currentStep++;
+                GameManager.instance.hasFood = false;
+                GameManager.instance.activeFoodID = 0;
+
+                // 3. Animal disappears
+                other.gameObject.SetActive(false);
+                if (successSound != null) audioSource.PlayOneShot(successSound);
+
+                // 4. THE WIN CHECK
+                // If Bear was Animal3, currentStep is now 4.
+                if (GameManager.instance.currentStep > 3)
+                {
+                    Debug.Log("Last animal fed! Triggering Win...");
+                    GameManager.instance.Win();
+                }
+                else
+                {
+                    // Only drop more food if there are more animals left
+                    UnlockNextItem(animalID, other.transform.position);
+                }
+            }
         }
     }
-
-    // --- FEEDING LOGIC ---
-    else if (other.CompareTag("Animal1") || other.CompareTag("Animal2") || other.CompareTag("Animal3"))
+    void UnlockNextItem(int completedStep, Vector3 animalPosition)
     {
-        int animalID = int.Parse(other.tag.Substring(6));
+        GameObject nextFood = null;
+        Vector3 dropOffset = Vector3.zero;
 
-        if (animalID == GameManager.instance.currentStep && GameManager.instance.hasFood && GameManager.instance.activeFoodID == animalID)
+        // Step 1: You fed the Monkey (Animal1) the Banana (Food1)
+        if (completedStep == 1)
         {
-            // Turn off the visual for what we are holding
-            UpdateFoodVisual(GameManager.instance.activeFoodID - 1, false);
+            nextFood = GameObject.FindWithTag("Food2"); // The Carrot appears
+            dropOffset = new Vector3(Gridofthemap.instance.cellSize, 0, 0); // Drop to the right
+        }
+        // Step 2: You fed the Bear (Animal2) the Carrot (Food2)
+        else if (completedStep == 2)
+        {
+            nextFood = GameObject.FindWithTag("Food3"); // The Honey appears
+            dropOffset = new Vector3(0, -Gridofthemap.instance.cellSize, 0); // Drop below
+        }
 
-            UnlockNextItem(GameManager.instance.currentStep, other.transform.position);
-            
-            GameManager.instance.currentStep++;
-            GameManager.instance.hasFood = false;
-            GameManager.instance.activeFoodID = 0;
+        if (nextFood != null)
+        {
+            // 1. Move it to the new spot
+            nextFood.transform.position = animalPosition + dropOffset;
 
-            other.gameObject.SetActive(false);
-            if (successSound != null) audioSource.PlayOneShot(successSound);
+            // 2. Make sure the object itself is Active
+            nextFood.SetActive(true);
+
+            // 3. FORCE the SpriteRenderer to turn on (since we unchecked it in Inspector)
+            SpriteRenderer sr = nextFood.GetComponent<SpriteRenderer>();
+            if (sr != null)
+            {
+                sr.enabled = true;
+                // Optional: Set sorting order high to make sure it's above the grid
+                sr.sortingOrder = 5;
+            }
+
+            Debug.Log($"{nextFood.name} is now visible at {nextFood.transform.position}");
         }
     }
-}
-   void UnlockNextItem(int completedStep, Vector3 animalPosition)
-{
-    GameObject nextFood = null;
-    Vector3 dropOffset = Vector3.zero;
-
-    // Step 1: You fed the Monkey (Animal1) the Banana (Food1)
-    if (completedStep == 1) 
-    {
-        nextFood = GameObject.FindWithTag("Food2"); // The Carrot appears
-        dropOffset = new Vector3(Gridofthemap.instance.cellSize, 0, 0); // Drop to the right
-    }
-    // Step 2: You fed the Bear (Animal2) the Carrot (Food2)
-    else if (completedStep == 2)
-    {
-        nextFood = GameObject.FindWithTag("Food3"); // The Honey appears
-        dropOffset = new Vector3(0, -Gridofthemap.instance.cellSize, 0); // Drop below
-    }
-
-    if (nextFood != null)
-{
-    // 1. Move it to the new spot
-    nextFood.transform.position = animalPosition + dropOffset;
-
-    // 2. Make sure the object itself is Active
-    nextFood.SetActive(true);
-
-    // 3. FORCE the SpriteRenderer to turn on (since we unchecked it in Inspector)
-    SpriteRenderer sr = nextFood.GetComponent<SpriteRenderer>();
-    if (sr != null) 
-    {
-        sr.enabled = true; 
-        // Optional: Set sorting order high to make sure it's above the grid
-        sr.sortingOrder = 5; 
-    }
-
-    Debug.Log($"{nextFood.name} is now visible at {nextFood.transform.position}");
-}
-}
     void HandleFail()
     {
         if (failSound != null) audioSource.PlayOneShot(failSound);
@@ -254,34 +267,48 @@ public class PlayerMovement : MonoBehaviour
         currentGridPos = WorldToGrid(startWorldPos);
 
         GameManager.instance.Lose();
-    }void UpdateFoodVisual(int foodIndex, bool state)
-{
-    // Hide ALL visuals first
-    for (int i = 0; i < carriedFoodVisuals.Length; i++)
-    {
-        if (carriedFoodVisuals[i] != null) 
-            carriedFoodVisuals[i].SetActive(false);
     }
-
-    // --- THE SHIFT ---
-    // Since your logs show Banana (what you want 1st) is at Index 1 
-    // and Honey (what you want 3rd) is at Index 0, we shift the index:
-    int shiftedIndex = foodIndex; 
-
-    if (foodIndex == 0) shiftedIndex = 1; // Pick up 1st item -> Show Banana (Index 1)
-    if (foodIndex == 1) shiftedIndex = 2; // Pick up 2nd item -> Show Carrot (Index 2)
-    if (foodIndex == 2) shiftedIndex = 0; // Pick up 3rd item -> Show Honey (Index 0)
-
-    // Apply the shifted index
-    if (state && shiftedIndex >= 0 && shiftedIndex < carriedFoodVisuals.Length)
+    void UpdateFoodVisual(int foodIndex, bool state)
     {
-        if (carriedFoodVisuals[shiftedIndex] != null)
+        // Hide ALL visuals first
+        for (int i = 0; i < carriedFoodVisuals.Length; i++)
         {
-            carriedFoodVisuals[shiftedIndex].SetActive(true);
-            Debug.Log($"CODE SHIFT: Tag was {foodIndex + 1}, but I am showing Index {shiftedIndex} ({carriedFoodVisuals[shiftedIndex].name})");
+            if (carriedFoodVisuals[i] != null)
+                carriedFoodVisuals[i].SetActive(false);
+        }
+
+        // --- THE SHIFT ---
+        // Since your logs show Banana (what you want 1st) is at Index 1 
+        // and Honey (what you want 3rd) is at Index 0, we shift the index:
+        int shiftedIndex = foodIndex;
+
+        if (foodIndex == 0) shiftedIndex = 1; // Pick up 1st item -> Show Banana (Index 1)
+        if (foodIndex == 1) shiftedIndex = 2; // Pick up 2nd item -> Show Carrot (Index 2)
+        if (foodIndex == 2) shiftedIndex = 0; // Pick up 3rd item -> Show Honey (Index 0)
+
+        // Apply the shifted index
+        if (state && shiftedIndex >= 0 && shiftedIndex < carriedFoodVisuals.Length)
+        {
+            if (carriedFoodVisuals[shiftedIndex] != null)
+            {
+                carriedFoodVisuals[shiftedIndex].SetActive(true);
+
+                // FORCE VISIBILITY
+                SpriteRenderer sr = carriedFoodVisuals[shiftedIndex].GetComponent<SpriteRenderer>();
+                if (sr != null)
+                {
+                    sr.enabled = true;
+                    sr.sortingOrder = 20; // High number to be in front of everything
+                }
+
+                // FORCE POSITION
+                // Set Z to -0.1 to ensure it is closer to the camera than the player
+                carriedFoodVisuals[shiftedIndex].transform.localPosition = new Vector3(0, 0, -0.1f);
+
+                Debug.Log($"CODE SHIFT: Tag was {foodIndex + 1}, but I am showing Index {shiftedIndex} ({carriedFoodVisuals[shiftedIndex].name})");
+            }
         }
     }
-}
 
     bool IsTouchingPlayer(Vector3 worldPos)
     {

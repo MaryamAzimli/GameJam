@@ -53,28 +53,30 @@ public class WinPanelUI : MonoBehaviour
 
         StartCoroutine(SlideUp());
     }
+private IEnumerator SlideUp()
+{
+    float elapsed = 0f;
+    Vector2 startPos = new Vector2(0f, hiddenY);
+    Vector2 endPos = new Vector2(0f, shownY);
 
-    private IEnumerator SlideUp()
+    // Use unscaledDeltaTime so the animation works even when Time.timeScale = 0
+    while (elapsed < moveDuration)
     {
-        float elapsed = 0f;
-        Vector2 startPos = new Vector2(0f, hiddenY);
-        Vector2 endPos = new Vector2(0f, shownY);
-
-        while (elapsed < moveDuration)
-        {
-            elapsed += Time.deltaTime;
-            float t = elapsed / moveDuration;
-            rectTransform.anchoredPosition = Vector2.Lerp(startPos, endPos, t);
-            yield return null;
-        }
-
-        rectTransform.anchoredPosition = endPos;
-
-        if (audioSource != null && audioSource.isPlaying)
-        {
-            audioSource.Stop();
-        }
+        elapsed += Time.unscaledDeltaTime; 
+        float t = elapsed / moveDuration;
+        
+        // Use a SmoothStep or Lerp to move the panel
+        rectTransform.anchoredPosition = Vector2.Lerp(startPos, endPos, t);
+        yield return null;
     }
+
+    rectTransform.anchoredPosition = endPos;
+
+    if (audioSource != null && audioSource.isPlaying)
+    {
+        audioSource.Stop();
+    }
+}
 
     public void Hide()
     {
