@@ -20,8 +20,12 @@ public class PlayerMovement : MonoBehaviour
     private AudioSource audioSource;
     private bool isDragging = false;
     private bool isMoving = false;
+
     private Vector3 dragStartWorld;
+    private Animator anim;
     private Collider2D col;
+    public Vector2 gridOrigin = Vector2.zero;
+    private Vector2Int currentGridPos;
     private Vector3 startPos;
     private Animator anim;
 
@@ -35,15 +39,49 @@ public class PlayerMovement : MonoBehaviour
         // Oyun ba?lad??? andaki pozisyonunu "güvenli bölge" olarak kaydet
         startPos = transform.position;
     }
+void Start()
+{
+    // Directly set to the second column (1) of the second row from bottom (1)
+    currentGridPos = new Vector2Int(1, 1);
+    
+    // Teleport the player to the center of that specific cell
+    transform.position = GridToWorld(currentGridPos);
 
+    Debug.Log($"Player started at designated Start Point: {currentGridPos}");
+}
     void Update()
     {
         // Panel aç?kken veya oyun bittiyse hareket etme
         if (!isMoving && GameManager.instance != null && !GameManager.instance.isGameOver && (riddlePanel == null || !riddlePanel.activeSelf))
         {
             HandleInput();
-        }
     }
+
+    // ---------------- GRID CONVERSION ----------------
+
+    Vector2Int WorldToGrid(Vector3 worldPos)
+    {
+        float cs = Gridofthemap.instance.cellSize;
+        Vector2 origin = Gridofthemap.instance.gridOrigin;
+
+        int x = Mathf.FloorToInt((worldPos.x - origin.x) / cs);
+        int y = Mathf.FloorToInt((worldPos.y - origin.y) / cs);
+
+        return new Vector2Int(x, y);
+    }
+    Vector3 GridToWorld(Vector2Int gridPos)
+    {
+        float cs = Gridofthemap.instance.cellSize;
+        Vector2 origin = Gridofthemap.instance.gridOrigin;
+
+        return new Vector3(
+        gridPos.x * cs + origin.x + cs / 2f,
+        gridPos.y * cs + origin.y + cs / 2f,
+        0
+    );
+    }
+
+    // ---------------- INPUT ----------------
 
     void HandleInput()
     {
@@ -64,28 +102,60 @@ public class PlayerMovement : MonoBehaviour
             Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             worldPos.z = 0f;
             Vector3 dir = worldPos - dragStartWorld;
-            float dist = Mathf.Min(dir.magnitude, maxDragDistance);
 
-            if (dist > 0.05f)
+            Vector2Int moveDir;
+
+            if (Mathf.Abs(dir.x) > Mathf.Abs(dir.y))
+                moveDir = dir.x > 0 ? Vector2Int.right : Vector2Int.left;
+            else
+                moveDir = dir.y > 0 ? Vector2Int.up : Vector2Int.down;
+
+            Vector2Int targetGrid = currentGridPos + moveDir;
+
+            if (targetGrid.x < 0 || targetGrid.x >= Gridofthemap.instance.width ||
+                targetGrid.y < 0 || targetGrid.y >= Gridofthemap.instance.height)
             {
-                StopAllCoroutines();
-                StartCoroutine(MoveToTarget(transform.position + dir.normalized * dist));
+                Debug.Log("Out of bounds!");
+                return;
+            }
+            targetGrid.x = Mathf.Clamp(targetGrid.x, 0, Gridofthemap.instance.width - 1);
+            targetGrid.y = Mathf.Clamp(targetGrid.y, 0, Gridofthemap.instance.height - 1);
+
+
+            Debug.Log("Current: " + currentGridPos + " Target: " + targetGrid);
+            if (Gridofthemap.instance.IsWalkable(targetGrid))
+            {
+                currentGridPos = targetGrid;
+                StartCoroutine(MoveTo(GridToWorld(targetGrid)));
+            }
+            else
+            {
+                Debug.Log("Blocked!");
             }
         }
     }
 
-    IEnumerator MoveToTarget(Vector3 target)
+    // ---------------- MOVEMENT ----------------
+
+    IEnumerator MoveTo(Vector3 target)
     {
         isMoving = true;
         if (anim != null) anim.SetBool("isMoving", true);
 
         while (Vector3.Distance(transform.position, target) > 0.05f)
         {
-            transform.position = Vector3.MoveTowards(transform.position, target, moveSpeed * Time.deltaTime);
+            transform.position = Vector3.MoveTowards(
+                transform.position,
+                target,
+                moveSpeed * Time.deltaTime
+            );
+
             yield return null;
         }
 
         transform.position = target;
+
+        anim.SetBool("isMoving", false);
         isMoving = false;
         if (anim != null) anim.SetBool("isMoving", false);
     }
@@ -133,6 +203,10 @@ public class PlayerMovement : MonoBehaviour
         else if (other.CompareTag("Animal1") || other.CompareTag("Animal2") || other.CompareTag("Animal3"))
         {
             string targetAnimalTag = "Animal" + GameManager.instance.currentStep;
+    bool IsTouchingPlayer(Vector3 worldPos)
+    {
+        if (col != null && col.OverlapPoint(worldPos))
+            return true;
 
             if (other.CompareTag(targetAnimalTag) && GameManager.instance.hasFood && GameManager.instance.activeFoodID == GameManager.instance.currentStep)
             {
@@ -162,5 +236,6 @@ public class PlayerMovement : MonoBehaviour
         foreach (var v in carriedFoodVisuals) if (v != null) v.SetActive(false);
         if (state && index >= 0 && index < carriedFoodVisuals.Length && carriedFoodVisuals[index] != null)
             carriedFoodVisuals[index].SetActive(true);
+        return Vector3.Distance(worldPos, transform.position) < 1.5f;
     }
 }
