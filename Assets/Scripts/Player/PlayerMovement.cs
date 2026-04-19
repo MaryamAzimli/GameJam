@@ -4,12 +4,12 @@ using System.Collections;
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Movement Settings")]
-    public float moveSpeed = 10f;
+    public float moveSpeed = 9f;
     public float touchRadius = 1.5f;
     private Vector2Int currentGridPos;
 
     [Header("Puzzle Setup")]
-    public GameObject[] carriedFoodVisuals; // 0: Bal, 1: Muz, 2: Havuç
+    public GameObject[] carriedFoodVisuals; // 0: Bal, 1: Muz, 2: Havuï¿½
     public AudioClip grabSound;
     public AudioClip successSound;
     public AudioClip failSound;
@@ -23,7 +23,7 @@ public class PlayerMovement : MonoBehaviour
     private Vector3 dragStartWorld;
     private Animator anim;
     private Collider2D col;
-    private Vector3 startWorldPos; // Fail durumunda dönülecek dünya koordinat?
+    private Vector3 startWorldPos; // Fail durumunda dï¿½nï¿½lecek dï¿½nya koordinat?
 
     void Awake()
     {
@@ -32,13 +32,13 @@ public class PlayerMovement : MonoBehaviour
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
 
-        // Fail durumunda ilk ba?lad??? yere dönmesi için
+        // Fail durumunda ilk ba?lad??? yere dï¿½nmesi iï¿½in
         startWorldPos = transform.position;
     }
 
     void Start()
     {
-        // Ba?lang?ç pozisyonunu (1,1) hücresine setle
+        // Ba?lang?ï¿½ pozisyonunu (1,1) hï¿½cresine setle
         currentGridPos = new Vector2Int(1, 1);
         transform.position = GridToWorld(currentGridPos);
     }
@@ -97,7 +97,7 @@ public class PlayerMovement : MonoBehaviour
             worldPos.z = 0f;
 
             Vector3 dir = worldPos - dragStartWorld;
-            if (dir.magnitude < 0.2f) return; // Çok küçük kayd?rmalar? yoksay
+            if (dir.magnitude < 0.2f) return; // ï¿½ok kï¿½ï¿½ï¿½k kayd?rmalar? yoksay
 
             Vector2Int moveDir;
             if (Mathf.Abs(dir.x) > Mathf.Abs(dir.y))
@@ -107,7 +107,7 @@ public class PlayerMovement : MonoBehaviour
 
             Vector2Int targetGrid = currentGridPos + moveDir;
 
-            // S?n?r kontrolü
+            // S?n?r kontrolï¿½
             if (targetGrid.x >= 0 && targetGrid.x < Gridofthemap.instance.width &&
                 targetGrid.y >= 0 && targetGrid.y < Gridofthemap.instance.height)
             {
@@ -162,7 +162,7 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    // --- ÇARPI?MA VE OYUN MANTI?I ---
+    // --- ï¿½ARPI?MA VE OYUN MANTI?I ---
     void OnTriggerEnter2D(Collider2D other)
     {
         if (GameManager.instance == null || GameManager.instance.isGameOver) return;
@@ -207,7 +207,7 @@ public class PlayerMovement : MonoBehaviour
         isMoving = false;
         if (anim != null) anim.SetBool("isMoving", false);
 
-        // Grid ve Dünya pozisyonunu ba?a sar
+        // Grid ve Dï¿½nya pozisyonunu ba?a sar
         transform.position = startWorldPos;
         currentGridPos = WorldToGrid(startWorldPos);
 
