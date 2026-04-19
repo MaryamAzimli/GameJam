@@ -10,36 +10,39 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Puzzle Setup")]
     public GameObject[] carriedFoodVisuals; // 0: Bal, 1: Muz, 2: Havuç
+    public AudioClip grabSound;
     public AudioClip successSound;
     public AudioClip failSound;
+
+    [Header("Riddle UI")]
+    public GameObject riddlePanel; // Unity'den RiddlePanel'i buraya sürükle
 
     private AudioSource audioSource;
     private bool isDragging = false;
     private bool isMoving = false;
-    private Animator anim;
     private Vector3 dragStartWorld;
     private Collider2D col;
     private Vector3 startPos;
+    private Animator anim;
 
     void Awake()
     {
-        anim = GetComponent<Animator>();
         col = GetComponent<Collider2D>();
+        anim = GetComponent<Animator>();
         audioSource = GetComponent<AudioSource>();
+        if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
+
+        // Oyun ba?lad??? andaki pozisyonunu "güvenli bölge" olarak kaydet
         startPos = transform.position;
     }
 
     void Update()
     {
-        if (!isMoving && !GameManager.instance.isGameOver)
+        // Panel aç?kken veya oyun bittiyse hareket etme
+        if (!isMoving && GameManager.instance != null && !GameManager.instance.isGameOver && (riddlePanel == null || !riddlePanel.activeSelf))
+        {
             HandleInput();
-    }
-
-    bool IsTouchingPlayer(Vector3 worldPos)
-    {
-        if (col.OverlapPoint(worldPos)) return true;
-        float dist = Vector3.Distance(worldPos, transform.position);
-        return dist <= touchRadius;
+        }
     }
 
     void HandleInput()
@@ -48,7 +51,11 @@ public class PlayerMovement : MonoBehaviour
         {
             Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             worldPos.z = 0f;
-            if (IsTouchingPlayer(worldPos)) { isDragging = true; dragStartWorld = worldPos; }
+            if (col.OverlapPoint(worldPos) || Vector3.Distance(worldPos, transform.position) <= touchRadius)
+            {
+                isDragging = true;
+                dragStartWorld = worldPos;
+            }
         }
 
         if (Input.GetMouseButtonUp(0) && isDragging)
@@ -58,34 +65,56 @@ public class PlayerMovement : MonoBehaviour
             worldPos.z = 0f;
             Vector3 dir = worldPos - dragStartWorld;
             float dist = Mathf.Min(dir.magnitude, maxDragDistance);
+
             if (dist > 0.05f)
             {
-                Vector3 target = transform.position + dir.normalized * dist;
                 StopAllCoroutines();
-                StartCoroutine(MoveToTarget(target));
+                StartCoroutine(MoveToTarget(transform.position + dir.normalized * dist));
             }
         }
     }
 
     IEnumerator MoveToTarget(Vector3 target)
     {
-        anim.SetBool("isMoving", true);
         isMoving = true;
-        while (Vector3.Distance(transform.position, target) > 0.01f)
+        if (anim != null) anim.SetBool("isMoving", true);
+
+        while (Vector3.Distance(transform.position, target) > 0.05f)
         {
             transform.position = Vector3.MoveTowards(transform.position, target, moveSpeed * Time.deltaTime);
             yield return null;
         }
+
         transform.position = target;
         isMoving = false;
-        anim.SetBool("isMoving", false);
+        if (anim != null) anim.SetBool("isMoving", false);
     }
 
+    // --- RIDDLE UI FONKS?YONLARI ---
+    public void OpenRiddle()
+    {
+        if (riddlePanel != null)
+        {
+            riddlePanel.SetActive(true);
+            Time.timeScale = 0f; // Oyunu durdur
+        }
+    }
+
+    public void CloseRiddle()
+    {
+        if (riddlePanel != null)
+        {
+            riddlePanel.SetActive(false);
+            Time.timeScale = 1f; // Oyunu devam ettir
+        }
+    }
+
+    // --- ÇARPI?MA KONTROLLER? ---
     void OnTriggerEnter2D(Collider2D other)
     {
         if (GameManager.instance == null || GameManager.instance.isGameOver) return;
 
-        // 1. HERHANG? B?R YEME?? TOPLAMA
+        // 1. YEMEK TOPLAMA
         if (other.CompareTag("Food1") || other.CompareTag("Food2") || other.CompareTag("Food3"))
         {
             if (!GameManager.instance.hasFood)
@@ -95,52 +124,43 @@ public class PlayerMovement : MonoBehaviour
                 else if (other.CompareTag("Food3")) GameManager.instance.activeFoodID = 3;
 
                 GameManager.instance.hasFood = true;
+                if (grabSound != null) audioSource.PlayOneShot(grabSound);
                 other.gameObject.SetActive(false);
                 UpdateFoodVisual(GameManager.instance.activeFoodID - 1, true);
             }
-            return;
         }
-
-        // 2. HAYVAN BESLEME (S?raya Göre)
-        if (other.CompareTag("Animal1") || other.CompareTag("Animal2") || other.CompareTag("Animal3"))
+        // 2. HAYVAN BESLEME
+        else if (other.CompareTag("Animal1") || other.CompareTag("Animal2") || other.CompareTag("Animal3"))
         {
             string targetAnimalTag = "Animal" + GameManager.instance.currentStep;
 
-            // E?er elindeki yemek o anki hayvana aitse (Örn: Bal(1) -> Ay?(1))
             if (other.CompareTag(targetAnimalTag) && GameManager.instance.hasFood && GameManager.instance.activeFoodID == GameManager.instance.currentStep)
             {
-                if (audioSource != null && successSound != null) audioSource.PlayOneShot(successSound);
+                if (successSound != null) audioSource.PlayOneShot(successSound);
                 UpdateFoodVisual(GameManager.instance.activeFoodID - 1, false);
                 GameManager.instance.hasFood = false;
                 GameManager.instance.currentStep++;
                 if (GameManager.instance.currentStep > 3) GameManager.instance.Win();
             }
-            else
-            {
-                if (audioSource != null && failSound != null) audioSource.PlayOneShot(failSound);
-                HandleWrongMove();
-            }
+            else { HandleFail(); }
         }
-        else if (other.CompareTag("Trap"))
-        {
-            if (audioSource != null && failSound != null) audioSource.PlayOneShot(failSound);
-            HandleWrongMove();
-        }
+        else if (other.CompareTag("Trap")) { HandleFail(); }
+    }
+
+    void HandleFail()
+    {
+        if (failSound != null) audioSource.PlayOneShot(failSound);
+        StopAllCoroutines();
+        isMoving = false;
+        if (anim != null) anim.SetBool("isMoving", false);
+        transform.position = startPos;
+        GameManager.instance.Lose();
     }
 
     void UpdateFoodVisual(int index, bool state)
     {
-        foreach (var v in carriedFoodVisuals) v.SetActive(false);
-        if (state && index >= 0 && index < carriedFoodVisuals.Length)
+        foreach (var v in carriedFoodVisuals) if (v != null) v.SetActive(false);
+        if (state && index >= 0 && index < carriedFoodVisuals.Length && carriedFoodVisuals[index] != null)
             carriedFoodVisuals[index].SetActive(true);
-    }
-
-    void HandleWrongMove()
-    {
-        StopAllCoroutines();
-        isMoving = false;
-        anim.SetBool("isMoving", false);
-        transform.position = startPos;
-        GameManager.instance.Lose();
     }
 }

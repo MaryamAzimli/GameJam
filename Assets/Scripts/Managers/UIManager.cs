@@ -7,6 +7,9 @@ public class UIManager : MonoBehaviour
     public GameObject pauseWindowPanel;
     public GameObject settingsPanel;
 
+    [Header("Riddle Setup")]
+    public GameObject riddlePanel; // Buraya Hierarchy'deki RiddlePanel'i sürükle
+
     public void RestartLevel()
     {
         Time.timeScale = 1f;
@@ -26,6 +29,28 @@ public class UIManager : MonoBehaviour
         pauseMenuPanel.SetActive(false);
         Time.timeScale = 1f;
     }
+
+    // --- RIDDLE (BILMECE) FONKSIYONLARI ---
+
+    public void OpenRiddle()
+    {
+        if (riddlePanel != null)
+        {
+            riddlePanel.SetActive(true);
+            Time.timeScale = 0f; // Okurken oyun dursun
+        }
+    }
+
+    public void CloseRiddle()
+    {
+        if (riddlePanel != null)
+        {
+            riddlePanel.SetActive(false);
+            Time.timeScale = 1f; // Kapat?nca oyun devam etsin
+        }
+    }
+
+    // --- MENÜ KONTROLLER? ---
 
     public void GoToMainMenu()
     {
