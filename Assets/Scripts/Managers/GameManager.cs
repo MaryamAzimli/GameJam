@@ -9,68 +9,40 @@ public class GameManager : MonoBehaviour
     public int life = 1;
     public bool isGameOver = false;
 
+    [Header("Puzzle State")]
+    public int currentStep = 1;
+    public bool hasFood = false;
+    public int activeFoodID = 0; // Hangi yeme?i ald???m?z? tutar
+
+    [Header("Audio Setup")]
+    public AudioSource bgmSource;
+
     public LosePanelUI losePanelUI;
     public WinPanelUI winPanelUI;
 
     void Awake()
     {
-        if (instance != null)
-        {
-            Destroy(gameObject);
-            return;
-        }
-
+        if (instance != null && instance != this) { Destroy(gameObject); return; }
         instance = this;
-        isGameOver = false;
-        Debug.Log("Life = " + life);
-    }
-
-    void Start()
-    {
-        if (losePanelUI == null)
-        {
-            GameObject loseObj = GameObject.Find("LoseWindowPanel");
-            if (loseObj != null)
-                losePanelUI = loseObj.GetComponent<LosePanelUI>();
-        }
-
-        if (winPanelUI == null)
-        {
-            GameObject winObj = GameObject.Find("WinWindowPanel");
-            if (winObj != null)
-                winPanelUI = winObj.GetComponent<WinPanelUI>();
-        }
-
-        Debug.Log("losePanelUI after Start = " + losePanelUI);
-        Debug.Log("winPanelUI after Start = " + winPanelUI);
     }
 
     public void Win()
     {
         if (isGameOver) return;
         isGameOver = true;
-
-        Debug.Log("YOU WIN!");
-
-        if (winPanelUI != null)
-        {
-            Debug.Log("Calling winPanelUI.Show()");
-            winPanelUI.Show();
-        }
+        if (bgmSource != null) bgmSource.Stop();
+        if (winPanelUI != null) winPanelUI.Show();
     }
 
     public void Lose()
     {
         if (isGameOver) return;
-        isGameOver = true;
-
-        Debug.Log("YOU LOSE!");
         life++;
-
-        if (losePanelUI != null)
+        if (life >= 4)
         {
-            Debug.Log("Calling losePanelUI.Show()");
-            losePanelUI.Show();
+            isGameOver = true;
+            if (bgmSource != null) bgmSource.Stop();
+            if (losePanelUI != null) losePanelUI.Show();
         }
     }
 
@@ -78,22 +50,5 @@ public class GameManager : MonoBehaviour
     {
         Time.timeScale = 1f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-    }
-
-    public void NextLevel()
-    {
-        level++;
-
-        int nextIndex = SceneManager.GetActiveScene().buildIndex + 1;
-
-        if (nextIndex < SceneManager.sceneCountInBuildSettings)
-        {
-            Time.timeScale = 1f;
-            SceneManager.LoadScene(nextIndex);
-        }
-        else
-        {
-            Debug.Log("No more levels!");
-        }
     }
 }

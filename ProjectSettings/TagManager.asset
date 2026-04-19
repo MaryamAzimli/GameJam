@@ -6,6 +6,12 @@ TagManager:
   tags:
   - Goal
   - Trap
+  - Food1
+  - Food2
+  - Food3
+  - Animal1
+  - Animal2
+  - Animal3
   layers:
   - Default
   - TransparentFX
