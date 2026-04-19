@@ -33,7 +33,7 @@ public class Gridofthemap : MonoBehaviour
 
     {1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1},
     {1,1,1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1},
-    {1,1,1,1,1,1,1,1,1,1,0,0,0,0,1,1,1,1,1,1},
+    {1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1},
     {1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1},
 
     {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1},
@@ -78,27 +78,22 @@ void GenerateGridVisual()
             GameObject cell = Instantiate(gridCellPrefab, pos, Quaternion.identity);
             SpriteRenderer cellSr = cell.GetComponent<SpriteRenderer>();
 
-            // Scale the cell down slightly so you see gaps (creating a grid effect)
-            cell.transform.localScale = Vector3.one * 0.95f;
-
+            // If the cell is WALKABLE (The Yellow Path)
             if (grid[(height - 1) - y, x] == 0)
             {
-                bool isOffset = (x + y) % 2 == 0;
+                // Make these look like "Step Stones"
+                cell.transform.localScale = Vector3.one * 0.85f; // Smaller for a "button" look
                 
-                // Boost alpha slightly so you can actually see it
-                float alpha = isOffset ? 0.1f : 0.18f; 
-                
-                // Soft Gold color
-                cellSr.color = new Color(1f, 0.9f, 0.5f, alpha);
-                cellSr.sortingOrder = -1;
+                // Use a soft white/gold glow
+                cellSr.color = new Color(1f, 1f, 1f, 0.2f); 
+                cellSr.sortingOrder = 1; // Put it slightly ABOVE the ground
             }
-            else
+            else // It is a WALL
             {
-                // To keep the "borders" of the path visible, 
-                // we can show the walls as very faint dark shadows
-                cellSr.color = new Color(0, 0, 0, 0.2f); 
-                // OR keep them off if you want the forest clean:
-                // cellSr.enabled = false;
+                // Instead of a box, make it a faint "Shadow"
+                cell.transform.localScale = Vector3.one; 
+                cellSr.color = new Color(0f, 0f, 0f, 0.4f); // Darker shadow
+                cellSr.sortingOrder = -1; // Keep it behind the player
             }
         }
     }

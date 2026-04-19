@@ -165,82 +165,106 @@ public class PlayerMovement : MonoBehaviour
     // --- �ARPI?MA VE OYUN MANTI?I ---
     void OnTriggerEnter2D(Collider2D other)
     {
+        Debug.Log("Player touched something: " + other.gameObject.name + " with tag: " + other.tag);
+
         if (GameManager.instance == null || GameManager.instance.isGameOver) return;
-
         // 1. YEMEK TOPLAMA
-        if (other.CompareTag("Food1") || other.CompareTag("Food2") || other.CompareTag("Food3"))
-        {
-            if (!GameManager.instance.hasFood)
-            {
-                if (other.CompareTag("Food1")) GameManager.instance.activeFoodID = 1;
-                else if (other.CompareTag("Food2")) GameManager.instance.activeFoodID = 2;
-                else if (other.CompareTag("Food3")) GameManager.instance.activeFoodID = 3;
+        // 1. YEMEK TOPLAMA
+        // 1. YEMEK TOPLAMA (Food Pickup)
+// 1. YEMEK TOPLAMA
+if (other.CompareTag("Food1") || other.CompareTag("Food2") || other.CompareTag("Food3"))
+{
+    int foodID = int.Parse(other.tag.Substring(4));
 
-                GameManager.instance.hasFood = true;
-                if (grabSound != null) audioSource.PlayOneShot(grabSound);
-                other.gameObject.SetActive(false);
-                UpdateFoodVisual(GameManager.instance.activeFoodID - 1, true);
-            }
-        }
+    if (!GameManager.instance.hasFood && foodID == GameManager.instance.currentStep)
+    {
+        GameManager.instance.activeFoodID = foodID;
+        GameManager.instance.hasFood = true;
+        
+        other.gameObject.SetActive(false);
+        
+        // Use the actual foodID here!
+        UpdateFoodVisual(foodID, true); 
+        
+        Debug.Log("Pickup successful. Visual updated for ID: " + foodID);
+    }
+}
         // 2. HAYVAN BESLEME
         // Inside OnTriggerEnter2D...
+        // 2. HAYVAN BESLEME
         else if (other.CompareTag("Animal1") || other.CompareTag("Animal2") || other.CompareTag("Animal3"))
-        {
-            int animalID = int.Parse(other.tag.Substring(6));
+{
+    // Extract ID (e.g., "Animal1" -> 1)
+    int animalID = int.Parse(other.tag.Substring(6));
 
-            if (animalID == GameManager.instance.currentStep && GameManager.instance.hasFood)
-            {
-                if (successSound != null) audioSource.PlayOneShot(successSound);
+    // Check if this animal matches the current step AND the player is holding the right food
+    if (animalID == GameManager.instance.currentStep && 
+        GameManager.instance.hasFood && 
+        GameManager.instance.activeFoodID == animalID)
+    {
+        if (successSound != null) audioSource.PlayOneShot(successSound);
 
-                UpdateFoodVisual(GameManager.instance.activeFoodID - 1, false);
-                GameManager.instance.hasFood = false;
+        // Remove food visual from player's hands
+        UpdateFoodVisual(GameManager.instance.activeFoodID - 1, false);
+        GameManager.instance.hasFood = false;
 
-                // PASS THE ANIMAL'S POSITION HERE
-                UnlockNextItem(GameManager.instance.currentStep, other.transform.position);
+        // Drop the next item near this animal
+        UnlockNextItem(GameManager.instance.currentStep, other.transform.position);
 
-                GameManager.instance.currentStep++;
+        // Advance the game state
+        GameManager.instance.currentStep++;
 
-                if (GameManager.instance.currentStep > 3)
-                    GameManager.instance.Win();
-            }
-            else
-            {
-                HandleFail();
-            }
-        }
+        // Hide the animal so the path is clear
+        other.gameObject.SetActive(false); 
+
+        if (GameManager.instance.currentStep > 3)
+            GameManager.instance.Win();
+    }
+    else if (GameManager.instance.hasFood && GameManager.instance.activeFoodID != animalID)
+    {
+        Debug.Log("The animal sniffed the food but didn't like it. Wrong item!");
+    }
+}
         else if (other.CompareTag("Trap")) { HandleFail(); }
     }
-    void UnlockNextItem(int completedStep, Vector3 animalPosition)
+   void UnlockNextItem(int completedStep, Vector3 animalPosition)
+{
+    GameObject nextFood = null;
+    Vector3 dropOffset = Vector3.zero;
+
+    // Step 1: You fed the Monkey (Animal1) the Banana (Food1)
+    if (completedStep == 1) 
     {
-        GameObject nextFood = null;
-        Vector3 dropOffset = Vector3.zero;
-
-        // Determine which food to drop and where
-        if (completedStep == 1) // Monkey drops Honey
-        {
-            nextFood = GameObject.FindWithTag("Food2");
-            dropOffset = new Vector3(0, -Gridofthemap.instance.cellSize, 0); // Drop 1 tile BELOW monkey
-        }
-        else if (completedStep == 2) // Bear drops Carrots
-        {
-            nextFood = GameObject.FindWithTag("Food3");
-            dropOffset = new Vector3(Gridofthemap.instance.cellSize, 0, 0); // Drop 1 tile RIGHT of bear
-        }
-
-        if (nextFood != null)
-        {
-            // Move the food to the tile next to the animal
-            nextFood.transform.position = animalPosition + dropOffset;
-
-            // Make it visible and active
-            nextFood.SetActive(true);
-            SpriteRenderer sr = nextFood.GetComponent<SpriteRenderer>();
-            if (sr != null) sr.enabled = true;
-
-            Debug.Log($"{nextFood.name} appeared near the animal!");
-        }
+        nextFood = GameObject.FindWithTag("Food2"); // The Carrot appears
+        dropOffset = new Vector3(Gridofthemap.instance.cellSize, 0, 0); // Drop to the right
+    }
+    // Step 2: You fed the Bear (Animal2) the Carrot (Food2)
+    else if (completedStep == 2)
+    {
+        nextFood = GameObject.FindWithTag("Food3"); // The Honey appears
+        dropOffset = new Vector3(0, -Gridofthemap.instance.cellSize, 0); // Drop below
     }
 
+    if (nextFood != null)
+{
+    // 1. Move it to the new spot
+    nextFood.transform.position = animalPosition + dropOffset;
+
+    // 2. Make sure the object itself is Active
+    nextFood.SetActive(true);
+
+    // 3. FORCE the SpriteRenderer to turn on (since we unchecked it in Inspector)
+    SpriteRenderer sr = nextFood.GetComponent<SpriteRenderer>();
+    if (sr != null) 
+    {
+        sr.enabled = true; 
+        // Optional: Set sorting order high to make sure it's above the grid
+        sr.sortingOrder = 5; 
+    }
+
+    Debug.Log($"{nextFood.name} is now visible at {nextFood.transform.position}");
+}
+}
     void HandleFail()
     {
         if (failSound != null) audioSource.PlayOneShot(failSound);
@@ -254,13 +278,28 @@ public class PlayerMovement : MonoBehaviour
 
         GameManager.instance.Lose();
     }
-
-    void UpdateFoodVisual(int index, bool state)
+void UpdateFoodVisual(int foodID, bool state)
+{
+    // First, hide everything to be safe
+    foreach (var v in carriedFoodVisuals) 
     {
-        foreach (var v in carriedFoodVisuals) if (v != null) v.SetActive(false);
-        if (state && index >= 0 && index < carriedFoodVisuals.Length && carriedFoodVisuals[index] != null)
-            carriedFoodVisuals[index].SetActive(true);
+        if (v != null) v.SetActive(false);
     }
+
+    // foodID 1 = Banana (Element 0)
+    // foodID 2 = Carrot (Element 1)
+    // foodID 3 = Honey  (Element 2)
+    int index = foodID - 1; 
+
+    if (state && index >= 0 && index < carriedFoodVisuals.Length)
+    {
+        if (carriedFoodVisuals[index] != null)
+        {
+            carriedFoodVisuals[index].SetActive(true);
+            Debug.Log($"Showing visual for Food ID: {foodID} at index {index}");
+        }
+    }
+}
 
     bool IsTouchingPlayer(Vector3 worldPos)
     {
