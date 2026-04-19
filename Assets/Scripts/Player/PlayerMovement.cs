@@ -4,7 +4,7 @@ using System.Collections;
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Movement Settings")]
-    public float moveSpeed = 10f;
+    public float moveSpeed = 9f;
     public float touchRadius = 1.5f;
     private Vector2Int currentGridPos;
 
