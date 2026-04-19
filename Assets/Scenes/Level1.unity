@@ -933,7 +933,6 @@ GameObject:
   - component: {fileID: 406487745}
   - component: {fileID: 406487744}
   - component: {fileID: 406487743}
-  - component: {fileID: 406487742}
   - component: {fileID: 406487748}
   m_Layer: 0
   m_Name: Player
@@ -942,18 +941,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &406487742
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 406487741}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 28e39d501e3a943b98704b197840dd24, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!61 &406487743
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -1039,8 +1026,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 5
-  maxDragDistance: 5
-  touchRadius: 1.5
+  gridOrigin: {x: 0, y: 0}
 --- !u!212 &406487746
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -5393,8 +5379,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 5
-  maxDragDistance: 5
-  touchRadius: 1.5
+  gridOrigin: {x: 0, y: 0}
 --- !u!81 &1553904969
 AudioListener:
   m_ObjectHideFlags: 0
@@ -5463,7 +5448,7 @@ Transform:
   m_GameObject: {fileID: 1553904964}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -10}
+  m_LocalPosition: {x: -14, y: -18.9, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6130,6 +6115,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2090240607}
   - component: {fileID: 2090240606}
+  - component: {fileID: 2090240608}
   m_Layer: 0
   m_Name: Background
   m_TagString: Untagged
@@ -6204,6 +6190,23 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2090240608
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2090240605}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 39984ade45837094a9234c6de59144fe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  width: 20
+  height: 20
+  cellSize: 3
+  gridOrigin: {x: -2, y: -2}
+  gridCellPrefab: {fileID: 4422852360109067093, guid: b5b06bd649fb0694b85b6f16f445ae08, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
