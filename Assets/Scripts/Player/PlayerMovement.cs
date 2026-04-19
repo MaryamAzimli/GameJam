@@ -256,20 +256,29 @@ public class PlayerMovement : MonoBehaviour
         GameManager.instance.Lose();
     }void UpdateFoodVisual(int foodIndex, bool state)
 {
-    // Hide ALL visuals first to ensure no overlap
+    // Hide ALL visuals first
     for (int i = 0; i < carriedFoodVisuals.Length; i++)
     {
         if (carriedFoodVisuals[i] != null) 
             carriedFoodVisuals[i].SetActive(false);
     }
 
-    // Only show the one we want if state is true
-    if (state && foodIndex >= 0 && foodIndex < carriedFoodVisuals.Length)
+    // --- THE SHIFT ---
+    // Since your logs show Banana (what you want 1st) is at Index 1 
+    // and Honey (what you want 3rd) is at Index 0, we shift the index:
+    int shiftedIndex = foodIndex; 
+
+    if (foodIndex == 0) shiftedIndex = 1; // Pick up 1st item -> Show Banana (Index 1)
+    if (foodIndex == 1) shiftedIndex = 2; // Pick up 2nd item -> Show Carrot (Index 2)
+    if (foodIndex == 2) shiftedIndex = 0; // Pick up 3rd item -> Show Honey (Index 0)
+
+    // Apply the shifted index
+    if (state && shiftedIndex >= 0 && shiftedIndex < carriedFoodVisuals.Length)
     {
-        if (carriedFoodVisuals[foodIndex] != null)
+        if (carriedFoodVisuals[shiftedIndex] != null)
         {
-            carriedFoodVisuals[foodIndex].SetActive(true);
-            Debug.Log("ACTUALLY SHOWING: " + carriedFoodVisuals[foodIndex].name + " at Index: " + foodIndex);
+            carriedFoodVisuals[shiftedIndex].SetActive(true);
+            Debug.Log($"CODE SHIFT: Tag was {foodIndex + 1}, but I am showing Index {shiftedIndex} ({carriedFoodVisuals[shiftedIndex].name})");
         }
     }
 }
