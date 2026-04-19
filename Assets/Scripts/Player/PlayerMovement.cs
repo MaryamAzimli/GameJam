@@ -183,21 +183,62 @@ public class PlayerMovement : MonoBehaviour
             }
         }
         // 2. HAYVAN BESLEME
+        // Inside OnTriggerEnter2D...
         else if (other.CompareTag("Animal1") || other.CompareTag("Animal2") || other.CompareTag("Animal3"))
         {
-            string targetAnimalTag = "Animal" + GameManager.instance.currentStep;
+            int animalID = int.Parse(other.tag.Substring(6));
 
-            if (other.CompareTag(targetAnimalTag) && GameManager.instance.hasFood && GameManager.instance.activeFoodID == GameManager.instance.currentStep)
+            if (animalID == GameManager.instance.currentStep && GameManager.instance.hasFood)
             {
                 if (successSound != null) audioSource.PlayOneShot(successSound);
+
                 UpdateFoodVisual(GameManager.instance.activeFoodID - 1, false);
                 GameManager.instance.hasFood = false;
+
+                // PASS THE ANIMAL'S POSITION HERE
+                UnlockNextItem(GameManager.instance.currentStep, other.transform.position);
+
                 GameManager.instance.currentStep++;
-                if (GameManager.instance.currentStep > 3) GameManager.instance.Win();
+
+                if (GameManager.instance.currentStep > 3)
+                    GameManager.instance.Win();
             }
-            else { HandleFail(); }
+            else
+            {
+                HandleFail();
+            }
         }
         else if (other.CompareTag("Trap")) { HandleFail(); }
+    }
+    void UnlockNextItem(int completedStep, Vector3 animalPosition)
+    {
+        GameObject nextFood = null;
+        Vector3 dropOffset = Vector3.zero;
+
+        // Determine which food to drop and where
+        if (completedStep == 1) // Monkey drops Honey
+        {
+            nextFood = GameObject.FindWithTag("Food2");
+            dropOffset = new Vector3(0, -Gridofthemap.instance.cellSize, 0); // Drop 1 tile BELOW monkey
+        }
+        else if (completedStep == 2) // Bear drops Carrots
+        {
+            nextFood = GameObject.FindWithTag("Food3");
+            dropOffset = new Vector3(Gridofthemap.instance.cellSize, 0, 0); // Drop 1 tile RIGHT of bear
+        }
+
+        if (nextFood != null)
+        {
+            // Move the food to the tile next to the animal
+            nextFood.transform.position = animalPosition + dropOffset;
+
+            // Make it visible and active
+            nextFood.SetActive(true);
+            SpriteRenderer sr = nextFood.GetComponent<SpriteRenderer>();
+            if (sr != null) sr.enabled = true;
+
+            Debug.Log($"{nextFood.name} appeared near the animal!");
+        }
     }
 
     void HandleFail()
