@@ -4,7 +4,7 @@ using System.Collections;
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Movement")]
-    public float moveSpeed = 10f;
+    public float moveSpeed = 8f;
     public float maxDragDistance = 10f;
     public float touchRadius = 1.5f;    // extra radius around player
 
