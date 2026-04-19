@@ -9,9 +9,8 @@ public class PlayerMovement : MonoBehaviour
     private Vector2Int currentGridPos;
 
     [Header("Puzzle Setup")]
-    public GameObject[] carriedFoodVisuals; // 0: Honey, 1: Banana, 2: Carrot
-    public AudioClip pickSound; // Pick sound for items
-    public AudioClip bikSound;  // Health decrease sound
+    public GameObject[] carriedFoodVisuals; // 0: Bal, 1: Muz, 2: Havu�
+    public AudioClip grabSound;
     public AudioClip successSound;
     public AudioClip failSound;
 
@@ -24,7 +23,7 @@ public class PlayerMovement : MonoBehaviour
     private Vector3 dragStartWorld;
     private Animator anim;
     private Collider2D col;
-    private Vector3 startWorldPos;
+    private Vector3 startWorldPos; // Fail durumunda d�n�lecek d�nya koordinat?
 
     void Awake()
     {
@@ -33,20 +32,20 @@ public class PlayerMovement : MonoBehaviour
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
 
-        // Save starting position to return on fail
+        // Fail durumunda ilk ba?lad??? yere d�nmesi i�in
         startWorldPos = transform.position;
     }
 
     void Start()
     {
-        // Set starting grid position to (1,1)
+        // Ba?lang?� pozisyonunu (1,1) h�cresine setle
         currentGridPos = new Vector2Int(1, 1);
         transform.position = GridToWorld(currentGridPos);
     }
 
     void Update()
     {
-        // Input check if not moving and game is active
+        // Hareket etmiyorken, oyun bitmemi?ken ve Riddle paneli kapal?yken input al
         if (!isMoving && GameManager.instance != null && !GameManager.instance.isGameOver && (riddlePanel == null || !riddlePanel.activeSelf))
         {
             HandleInput();
@@ -98,7 +97,7 @@ public class PlayerMovement : MonoBehaviour
             worldPos.z = 0f;
 
             Vector3 dir = worldPos - dragStartWorld;
-            if (dir.magnitude < 0.2f) return;
+            if (dir.magnitude < 0.2f) return; // �ok k���k kayd?rmalar? yoksay
 
             Vector2Int moveDir;
             if (Mathf.Abs(dir.x) > Mathf.Abs(dir.y))
@@ -108,7 +107,7 @@ public class PlayerMovement : MonoBehaviour
 
             Vector2Int targetGrid = currentGridPos + moveDir;
 
-            // Boundary check
+            // S?n?r kontrol�
             if (targetGrid.x >= 0 && targetGrid.x < Gridofthemap.instance.width &&
                 targetGrid.y >= 0 && targetGrid.y < Gridofthemap.instance.height)
             {
@@ -117,6 +116,10 @@ public class PlayerMovement : MonoBehaviour
                     currentGridPos = targetGrid;
                     StopAllCoroutines();
                     StartCoroutine(MoveTo(GridToWorld(targetGrid)));
+                }
+                else
+                {
+                    Debug.Log("Yol kapal?!");
                 }
             }
         }
@@ -159,102 +162,117 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    // --- COLLISION AND LOGIC ---
-    void OnTriggerEnter2D(Collider2D other)
+    // --- �ARPI?MA VE OYUN MANTI?I ---
+ void OnTriggerEnter2D(Collider2D other)
+{
+    if (GameManager.instance == null || GameManager.instance.isGameOver) return;
+
+    // --- PICKUP LOGIC ---
+    if (other.CompareTag("Food1") || other.CompareTag("Food2") || other.CompareTag("Food3"))
     {
-        if (GameManager.instance == null || GameManager.instance.isGameOver) return;
+        int foodID = int.Parse(other.tag.Substring(4));
 
-        // 1. PICKING FOOD
-        if (other.CompareTag("Food1") || other.CompareTag("Food2") || other.CompareTag("Food3"))
+        if (!GameManager.instance.hasFood && foodID == GameManager.instance.currentStep)
         {
-            if (!GameManager.instance.hasFood)
-            {
-                if (other.CompareTag("Food1")) GameManager.instance.activeFoodID = 1;
-                else if (other.CompareTag("Food2")) GameManager.instance.activeFoodID = 2;
-                else if (other.CompareTag("Food3")) GameManager.instance.activeFoodID = 3;
+            GameManager.instance.activeFoodID = foodID;
+            GameManager.instance.hasFood = true;
+            other.gameObject.SetActive(false);
 
-                GameManager.instance.hasFood = true;
-
-                // Play pick sound
-                if (pickSound != null) audioSource.PlayOneShot(pickSound);
-
-                other.gameObject.SetActive(false);
-                UpdateFoodVisual(GameManager.instance.activeFoodID - 1, true);
-            }
-        }
-        // 2. FEEDING ANIMALS
-        else if (other.CompareTag("Animal1") || other.CompareTag("Animal2") || other.CompareTag("Animal3"))
-        {
-            int animalID = int.Parse(other.tag.Substring(6));
-
-            if (animalID == GameManager.instance.currentStep && GameManager.instance.hasFood)
-            {
-                if (successSound != null) audioSource.PlayOneShot(successSound);
-
-                UpdateFoodVisual(GameManager.instance.activeFoodID - 1, false);
-                GameManager.instance.hasFood = false;
-
-                UnlockNextItem(GameManager.instance.currentStep, other.transform.position);
-                GameManager.instance.currentStep++;
-
-                if (GameManager.instance.currentStep > 3)
-                    GameManager.instance.Win();
-            }
-            else
-            {
-                HandleFail();
-            }
-        }
-        else if (other.CompareTag("Trap")) { HandleFail(); }
-    }
-
-    void UnlockNextItem(int completedStep, Vector3 animalPosition)
-    {
-        GameObject nextFood = null;
-        Vector3 dropOffset = Vector3.zero;
-
-        if (completedStep == 1)
-        {
-            nextFood = GameObject.FindWithTag("Food2");
-            dropOffset = new Vector3(0, -Gridofthemap.instance.cellSize, 0);
-        }
-        else if (completedStep == 2)
-        {
-            nextFood = GameObject.FindWithTag("Food3");
-            dropOffset = new Vector3(Gridofthemap.instance.cellSize, 0, 0);
-        }
-
-        if (nextFood != null)
-        {
-            nextFood.transform.position = animalPosition + dropOffset;
-            nextFood.SetActive(true);
-            SpriteRenderer sr = nextFood.GetComponent<SpriteRenderer>();
-            if (sr != null) sr.enabled = true;
+            // Feed ID 1 -> Shows Index 0, ID 2 -> Index 1
+            UpdateFoodVisual(foodID - 1, true); 
         }
     }
 
+    // --- FEEDING LOGIC ---
+    else if (other.CompareTag("Animal1") || other.CompareTag("Animal2") || other.CompareTag("Animal3"))
+    {
+        int animalID = int.Parse(other.tag.Substring(6));
+
+        if (animalID == GameManager.instance.currentStep && GameManager.instance.hasFood && GameManager.instance.activeFoodID == animalID)
+        {
+            // Turn off the visual for what we are holding
+            UpdateFoodVisual(GameManager.instance.activeFoodID - 1, false);
+
+            UnlockNextItem(GameManager.instance.currentStep, other.transform.position);
+            
+            GameManager.instance.currentStep++;
+            GameManager.instance.hasFood = false;
+            GameManager.instance.activeFoodID = 0;
+
+            other.gameObject.SetActive(false);
+            if (successSound != null) audioSource.PlayOneShot(successSound);
+        }
+    }
+}
+   void UnlockNextItem(int completedStep, Vector3 animalPosition)
+{
+    GameObject nextFood = null;
+    Vector3 dropOffset = Vector3.zero;
+
+    // Step 1: You fed the Monkey (Animal1) the Banana (Food1)
+    if (completedStep == 1) 
+    {
+        nextFood = GameObject.FindWithTag("Food2"); // The Carrot appears
+        dropOffset = new Vector3(Gridofthemap.instance.cellSize, 0, 0); // Drop to the right
+    }
+    // Step 2: You fed the Bear (Animal2) the Carrot (Food2)
+    else if (completedStep == 2)
+    {
+        nextFood = GameObject.FindWithTag("Food3"); // The Honey appears
+        dropOffset = new Vector3(0, -Gridofthemap.instance.cellSize, 0); // Drop below
+    }
+
+    if (nextFood != null)
+{
+    // 1. Move it to the new spot
+    nextFood.transform.position = animalPosition + dropOffset;
+
+    // 2. Make sure the object itself is Active
+    nextFood.SetActive(true);
+
+    // 3. FORCE the SpriteRenderer to turn on (since we unchecked it in Inspector)
+    SpriteRenderer sr = nextFood.GetComponent<SpriteRenderer>();
+    if (sr != null) 
+    {
+        sr.enabled = true; 
+        // Optional: Set sorting order high to make sure it's above the grid
+        sr.sortingOrder = 5; 
+    }
+
+    Debug.Log($"{nextFood.name} is now visible at {nextFood.transform.position}");
+}
+}
     void HandleFail()
     {
-        // Play health decrease sound
-        if (bikSound != null) audioSource.PlayOneShot(bikSound);
-
+        if (failSound != null) audioSource.PlayOneShot(failSound);
         StopAllCoroutines();
         isMoving = false;
         if (anim != null) anim.SetBool("isMoving", false);
 
-        // Reset grid and world position
+        // Grid ve D�nya pozisyonunu ba?a sar
         transform.position = startWorldPos;
         currentGridPos = WorldToGrid(startWorldPos);
 
         GameManager.instance.Lose();
+    }void UpdateFoodVisual(int foodIndex, bool state)
+{
+    // Hide ALL visuals first to ensure no overlap
+    for (int i = 0; i < carriedFoodVisuals.Length; i++)
+    {
+        if (carriedFoodVisuals[i] != null) 
+            carriedFoodVisuals[i].SetActive(false);
     }
 
-    void UpdateFoodVisual(int index, bool state)
+    // Only show the one we want if state is true
+    if (state && foodIndex >= 0 && foodIndex < carriedFoodVisuals.Length)
     {
-        foreach (var v in carriedFoodVisuals) if (v != null) v.SetActive(false);
-        if (state && index >= 0 && index < carriedFoodVisuals.Length && carriedFoodVisuals[index] != null)
-            carriedFoodVisuals[index].SetActive(true);
+        if (carriedFoodVisuals[foodIndex] != null)
+        {
+            carriedFoodVisuals[foodIndex].SetActive(true);
+            Debug.Log("ACTUALLY SHOWING: " + carriedFoodVisuals[foodIndex].name + " at Index: " + foodIndex);
+        }
     }
+}
 
     bool IsTouchingPlayer(Vector3 worldPos)
     {
