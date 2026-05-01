@@ -77,56 +77,85 @@ public class PlayerMovement : MonoBehaviour
     // ---------------- INPUT ----------------
 
     void HandleInput()
+{
+    if (Input.GetMouseButtonDown(0))
     {
-        if (Input.GetMouseButtonDown(0))
+        Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        worldPos.z = 0f;
+
+        if (IsTouchingPlayer(worldPos))
         {
-            Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            worldPos.z = 0f;
-
-            if (IsTouchingPlayer(worldPos))
-            {
-                isDragging = true;
-                dragStartWorld = worldPos;
-            }
-        }
-
-        if (Input.GetMouseButtonUp(0) && isDragging)
-        {
-            isDragging = false;
-            Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            worldPos.z = 0f;
-
-            Vector3 dir = worldPos - dragStartWorld;
-            if (dir.magnitude < 0.2f) return; // �ok k���k kayd?rmalar? yoksay
-
-            Vector2Int moveDir;
-            if (Mathf.Abs(dir.x) > Mathf.Abs(dir.y))
-                moveDir = dir.x > 0 ? Vector2Int.right : Vector2Int.left;
-            else
-                moveDir = dir.y > 0 ? Vector2Int.up : Vector2Int.down;
-
-            Vector2Int targetGrid = currentGridPos + moveDir;
-
-            // S?n?r kontrol�
-            if (targetGrid.x >= 0 && targetGrid.x < Gridofthemap.instance.width &&
-                targetGrid.y >= 0 && targetGrid.y < Gridofthemap.instance.height)
-            {
-                if (Gridofthemap.instance.IsWalkable(targetGrid))
-                {
-                    currentGridPos = targetGrid;
-                    StopAllCoroutines();
-                    StartCoroutine(MoveTo(GridToWorld(targetGrid)));
-                }
-                else
-                {
-                    Debug.Log("Yol kapal?!");
-                }
-            }
+            isDragging = true;
+            dragStartWorld = worldPos;
         }
     }
 
-    // ---------------- MOVEMENT ----------------
+    if (Input.GetMouseButtonUp(0) && isDragging)
+    {
+        isDragging = false;
+        Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        worldPos.z = 0f;
 
+        Vector3 dir = worldPos - dragStartWorld;
+        float swipeDist = dir.magnitude;
+        
+        // Threshold: How far must they drag to count as 1 cell? 2 cells?
+        float unit = Gridofthemap.instance.cellSize;
+        if (swipeDist < unit * 0.3f) return; // Ignore tiny taps
+
+        // Determine Direction
+        Vector2Int moveDir;
+        if (Mathf.Abs(dir.x) > Mathf.Abs(dir.y))
+            moveDir = dir.x > 0 ? Vector2Int.right : Vector2Int.left;
+        else
+            moveDir = dir.y > 0 ? Vector2Int.up : Vector2Int.down;
+
+        // Determine intended distance (1 or 2 cells)
+        int intendedDistance = (swipeDist > unit * 1.2f) ? 2 : 1;
+
+        // Calculate the actual target
+        Vector2Int finalTarget = CalculateValidMove(moveDir, intendedDistance);
+
+        if (finalTarget != currentGridPos)
+        {
+            currentGridPos = finalTarget;
+            StopAllCoroutines();
+            StartCoroutine(MoveTo(GridToWorld(finalTarget)));
+        }
+    }
+}
+
+    // ---------------- MOVEMENT ----------------
+Vector2Int CalculateValidMove(Vector2Int direction, int maxSteps)
+{
+    Vector2Int bestValidPos = currentGridPos;
+
+    for (int i = 1; i <= maxSteps; i++)
+    {
+        Vector2Int checkPos = currentGridPos + (direction * i);
+
+        // Check Map Bounds
+        if (checkPos.x >= 0 && checkPos.x < Gridofthemap.instance.width &&
+            checkPos.y >= 0 && checkPos.y < Gridofthemap.instance.height)
+        {
+            // Check if Walkable
+            if (Gridofthemap.instance.IsWalkable(checkPos))
+            {
+                bestValidPos = checkPos; // This step is good, keep checking next
+            }
+            else
+            {
+                break; // Hit a wall, stop at the last valid position
+            }
+        }
+        else
+        {
+            break; // Out of bounds
+        }
+    }
+
+    return bestValidPos;
+}
     IEnumerator MoveTo(Vector3 target)
     {
         isMoving = true;
