@@ -14,30 +14,30 @@ public class Gridofthemap : MonoBehaviour
 
     public int[,] grid = new int[20, 20]
     {
-    {1,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-    {1,1,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+    {1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
     {1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
     {1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+    {1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+    {1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+
+    {1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+    {1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+    {1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+    {1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+    {1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+
+    {1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
     {1,1,1,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-
     {1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
     {1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-    {1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-    {1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1},
-    {1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1},
 
-    {1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1},
-    {1,1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1,1,1,1},
-    {1,1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1,1,1,1},
-    {1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1},
+    {1,1,1,1,1,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1},
+    {1,1,1,1,1,1,1,0,0,0,0,1,1,1,1,1,1,1,1,1},
+    {1,1,1,1,1,1,1,1,1,0,0,0,0,1,1,1,1,1,1,1},
+    {1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1},
 
-    {1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1},
-    {1,1,1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1},
-    {1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1},
-    {1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1},
-
-    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1},
-    {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
+    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1},
+    {1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1}
     };
     // Inside Gridofthemap.cs
     void Awake()
@@ -59,6 +59,7 @@ public class Gridofthemap : MonoBehaviour
 
         Debug.Log($"Grid Initialized. Origin: {gridOrigin}, CellSize: {cellSize}");
     }
+
     void Start()
     {
         GenerateGridVisual();
@@ -69,32 +70,26 @@ void GenerateGridVisual()
     {
         for (int y = 0; y < height; y++)
         {
+            if (grid[(height - 1) - y, x] != 0) continue;
+
             Vector3 pos = new Vector3(
                 x * cellSize + gridOrigin.x + cellSize / 2f,
                 y * cellSize + gridOrigin.y + cellSize / 2f,
                 0
             );
 
-            GameObject cell = Instantiate(gridCellPrefab, pos, Quaternion.identity);
-            SpriteRenderer cellSr = cell.GetComponent<SpriteRenderer>();
+            GameObject dust = Instantiate(gridCellPrefab, pos, Quaternion.identity);
+            
+            // SCALE: Make it small! This turns big snowflakes into tiny dust.
+            dust.transform.localScale = Vector3.one * (cellSize * 0.3f); 
 
-            // If the cell is WALKABLE (The Yellow Path)
-            if (grid[(height - 1) - y, x] == 0)
-            {
-                // Make these look like "Step Stones"
-                cell.transform.localScale = Vector3.one * 0.85f; // Smaller for a "button" look
-                
-                // Use a soft white/gold glow
-                cellSr.color = new Color(1f, 1f, 1f, 0.2f); 
-                cellSr.sortingOrder = 1; // Put it slightly ABOVE the ground
-            }
-            else // It is a WALL
-            {
-                // Instead of a box, make it a faint "Shadow"
-                cell.transform.localScale = Vector3.one; 
-                cellSr.color = new Color(0f, 0f, 0f, 0.4f); // Darker shadow
-                cellSr.sortingOrder = -1; // Keep it behind the player
-            }
+            // ROTATION: Keep this to make the trail look "fluffy"
+            dust.transform.rotation = Quaternion.Euler(0, 0, Random.Range(0, 360));
+
+            SpriteRenderer sr = dust.GetComponent<SpriteRenderer>();
+            
+            // ALPHA: Make it very low (0.1f is 10% visibility)
+            sr.color = new Color(1f, 1f, 1f, 0.1f); 
         }
     }
 }
